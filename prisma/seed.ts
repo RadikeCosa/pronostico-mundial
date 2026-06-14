@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
+import { pbkdf2, randomBytes } from "node:crypto";
 import { resolve } from "node:path";
+import { promisify } from "node:util";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { MatchStage, Prisma, PrismaClient } from "@prisma/client";
-import { normalizeNameForLogin, slugifyParticipantName } from "../lib/auth/identity";
-import { hashPassword } from "../lib/auth/password";
+
+const pbkdf2Async = promisify(pbkdf2);
 
 type FixtureTeam = {
   name: string;
@@ -93,6 +95,32 @@ const STAGE_MAP: Record<string, MatchStage> = {
   "Third Place": MatchStage.THIRD_PLACE,
   Final: MatchStage.FINAL,
 };
+
+function normalizeParticipantName(name: string): string {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+function normalizeNameForLogin(name: string): string {
+  return normalizeParticipantName(name).toLocaleLowerCase("es");
+}
+
+function slugifyParticipantName(name: string): string {
+  const normalized = normalizeNameForLogin(name)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "participante";
+}
+
+async function hashPassword(password: string): Promise<string> {
+  const iterations = 120_000;
+  const salt = randomBytes(16).toString("base64url");
+  const derivedKey = await pbkdf2Async(password, salt, iterations, 32, "sha256");
+
+  return ["pbkdf2_sha256", iterations.toString(), salt, derivedKey.toString("base64url")].join("$");
+}
 
 function loadFixture(): FixtureData {
   const fixturePath = resolve(process.cwd(), "prisma/seed-data/fixture.json");
