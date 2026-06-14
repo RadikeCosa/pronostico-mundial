@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Aplicacion familiar de pronosticos para el Mundial 2026 construida con Next.js, Prisma y Postgres.
 
-## Getting Started
+## Scripts
 
-First, run the development server:
+- `npm run dev`: inicia la app.
+- `npm run lint`: corre ESLint.
+- `npm run test`: corre los tests unitarios de dominio con Vitest.
+- `npm run prisma:validate`: valida el schema Prisma.
+- `npm run prisma:generate`: genera Prisma Client.
+- `npm run db:push`: aplica el schema a la base configurada.
+- `npm run db:seed`: carga participantes, equipos, partidos y pronosticos historicos.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Scoring
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+El motor de scoring vive en `lib/scoring.ts` y es logica pura.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Fase de grupos:
+  exacto = 3, signo correcto sin exacto = 1.
+- Knockout:
+  exacto = 3, y si el partido termina empatado el clasificado correcto suma 1 adicional.
+- Regla actual:
+  si pronostica empate sin acertar el resultado exacto, pero acierta quien clasifica, suma 1 punto.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Read models
 
-## Learn More
+Las funciones server-side viven en `lib/read-models.ts`.
 
-To learn more about Next.js, take a look at the following resources:
+- participantes activos
+- partidos agrupados por dia
+- partidos filtrados por grupo
+- detalle de partido con bloqueo, reveal y predicciones visibles
+- tabla de posiciones parcial recalculada desde resultados y pronosticos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## UI inicial
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `/`: seleccion de participante
+- `/`: formulario simple para alta de participantes
+- `/p/[participantId]`: partidos y tabla de puntos
+- `/p/[participantId]/matches/[matchId]`: detalle y carga de pronostico
+- `/admin/results`: carga manual de resultados
 
-## Deploy on Vercel
+La unicidad del nombre se valida de forma case-insensitive en la app. La restriccion unica dura de base sigue siendo `name` tal como esta en el schema actual.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Base de datos
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Defini `DATABASE_URL` antes de correr comandos de Prisma que hablen con la base.
+
+El fixture base esta en `prisma/seed-data/fixture.json`.
+
+## Desarrollo
+
+Abrir [http://localhost:3000](http://localhost:3000) despues de `npm run dev`.
