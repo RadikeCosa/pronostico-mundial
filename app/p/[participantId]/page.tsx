@@ -98,6 +98,14 @@ export default async function ParticipantPage({
                 Cargar resultados
               </Link>
             ) : null}
+            {currentParticipant.isAdmin ? (
+              <Link
+                href="/admin/participants"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+              >
+                Usuarios
+              </Link>
+            ) : null}
             <Link
               href={`/p/${participantId}`}
               className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
@@ -162,6 +170,12 @@ export default async function ParticipantPage({
             className="rounded-full bg-black px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-zinc-800"
           >
             Ir a cargar resultados
+          </Link>
+          <Link
+            href="/admin/participants"
+            className="rounded-full border border-black/20 px-4 py-3 text-center text-sm font-semibold text-amber-950 transition hover:bg-amber-100"
+          >
+            Crear usuario
           </Link>
         </section>
       ) : null}

@@ -1,4 +1,5 @@
 import { formatMatchDayLabel, LocalDateTime } from "@/components/local-date-time";
+import Link from "next/link";
 import { ResultForm } from "@/components/result-form";
 import { requireAdmin } from "@/lib/auth/session";
 import { formatResultTrace, formatStageLabel } from "@/lib/presentation";
@@ -19,6 +20,20 @@ export default async function AdminResultsPage() {
         <p className="mt-2 max-w-2xl text-sm text-white/75">
           Solo administradores pueden cargar resultados. Los resultados impactan directo en la tabla de puntos.
         </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link
+            href="/admin/participants"
+            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+          >
+            Usuarios
+          </Link>
+          <Link
+            href="/"
+            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+          >
+            Volver
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-col gap-8">
