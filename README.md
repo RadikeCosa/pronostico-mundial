@@ -17,6 +17,11 @@ Copiá `.env.example` a `.env.local` para desarrollo local.
 - `DIRECT_DATABASE_URL`
   Opcional pero recomendada para Prisma Migrate. Usá la URL directa/no pooled si el proveedor la expone.
 
+También se aceptan los alias que suelen crear las integraciones de Vercel/Neon:
+
+- Runtime: `POSTGRES_PRISMA_URL` o `POSTGRES_URL`.
+- Migraciones: `DATABASE_URL_UNPOOLED` o `POSTGRES_URL_NON_POOLING`.
+
 No subas secretos reales al repo. `.env*` ya está ignorado.
 
 ## Setup local
@@ -81,6 +86,8 @@ Checklist para Vercel + Neon:
 2. Configurar en Vercel:
    - `DATABASE_URL`
    - `DIRECT_DATABASE_URL` recomendable para migraciones
+   Si usás la integración de Neon/Vercel, también sirven `POSTGRES_PRISMA_URL`,
+   `POSTGRES_URL`, `DATABASE_URL_UNPOOLED` o `POSTGRES_URL_NON_POOLING`.
 3. Build command:
    `npm run build`
 4. Install command:
