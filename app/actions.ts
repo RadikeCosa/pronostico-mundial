@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { getPrismaClient } from "@/lib/prisma";
+import {
+  normalizeNameForLogin,
+  normalizeParticipantName,
+  slugifyParticipantName,
+} from "@/lib/auth/identity";
 import type { ParticipantCreateState } from "@/components/participant-create-form";
-
-function normalizeParticipantName(name: string): string {
-  return name.trim().replace(/\s+/g, " ");
-}
 
 export async function createParticipantAction(
   _previousState: ParticipantCreateState,
@@ -23,12 +24,10 @@ export async function createParticipantAction(
   }
 
   const prisma = getPrismaClient();
+  const normalizedName = normalizeNameForLogin(name);
   const existingParticipant = await prisma.participant.findFirst({
     where: {
-      name: {
-        equals: name,
-        mode: "insensitive",
-      },
+      normalizedName,
     },
     select: {
       id: true,
@@ -45,6 +44,8 @@ export async function createParticipantAction(
   await prisma.participant.create({
     data: {
       name,
+      slug: slugifyParticipantName(name),
+      normalizedName,
       active: true,
     },
   });

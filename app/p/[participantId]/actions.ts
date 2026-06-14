@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getCurrentParticipant } from "@/lib/auth/session";
 import { getPrismaClient } from "@/lib/prisma";
 import { isMatchLocked } from "@/lib/read-models";
 import type { PredictionFormState } from "@/components/prediction-form";
@@ -23,9 +24,25 @@ export async function upsertPredictionAction(
   _previousState: PredictionFormState,
   formData: FormData,
 ): Promise<PredictionFormState> {
+  const currentParticipant = await getCurrentParticipant();
+
+  if (!currentParticipant) {
+    return {
+      status: "error",
+      message: "Necesitás ingresar de nuevo para guardar tu pronóstico.",
+    };
+  }
+
+  if (currentParticipant.id !== participantId) {
+    return {
+      status: "error",
+      message: "No podés guardar pronósticos de otro participante.",
+    };
+  }
+
   const prisma = getPrismaClient();
   const participant = await prisma.participant.findUnique({
-    where: { id: participantId },
+    where: { id: currentParticipant.id },
     select: { id: true, active: true },
   });
 
@@ -78,7 +95,7 @@ export async function upsertPredictionAction(
   const existingPrediction = await prisma.prediction.findUnique({
     where: {
       participantId_matchId: {
-        participantId,
+        participantId: currentParticipant.id,
         matchId,
       },
     },
@@ -97,7 +114,7 @@ export async function upsertPredictionAction(
   } else {
     await prisma.prediction.create({
       data: {
-        participantId,
+        participantId: currentParticipant.id,
         matchId,
         homeScore,
         awayScore,

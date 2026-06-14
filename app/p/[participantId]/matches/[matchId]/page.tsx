@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PredictionForm } from "@/components/prediction-form";
 import { LocalDateTime } from "@/components/local-date-time";
 import { upsertPredictionAction } from "../../actions";
+import { getCurrentParticipant } from "@/lib/auth/session";
 import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
 import { getMatchReadModelById, getParticipantById } from "@/lib/read-models";
 
@@ -15,6 +16,15 @@ type MatchDetailPageProps = {
 export default async function MatchDetailPage({ params }: MatchDetailPageProps) {
   const { participantId, matchId } = await params;
   const now = new Date();
+  const currentParticipant = await getCurrentParticipant();
+
+  if (!currentParticipant) {
+    redirect("/login");
+  }
+
+  if (currentParticipant.id !== participantId) {
+    redirect(`/p/${currentParticipant.id}/matches/${matchId}`);
+  }
 
   const [participant, matchReadModel] = await Promise.all([
     getParticipantById(participantId),

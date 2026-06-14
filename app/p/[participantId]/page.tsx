@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { LocalDateTime } from "@/components/local-date-time";
+import { getCurrentParticipant } from "@/lib/auth/session";
 import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
 import {
   getMatchDay,
@@ -8,6 +9,7 @@ import {
   getParticipantMatches,
   getStandingsTable,
 } from "@/lib/read-models";
+import { logoutAction } from "@/app/logout/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +42,15 @@ export default async function ParticipantPage({
   const resolvedSearchParams = await searchParams;
   const view = resolvedSearchParams.view ?? "day";
   const now = new Date();
+  const currentParticipant = await getCurrentParticipant();
+
+  if (!currentParticipant) {
+    redirect("/login");
+  }
+
+  if (currentParticipant.id !== participantId) {
+    redirect(`/p/${currentParticipant.id}`);
+  }
 
   const [participant, matches, standings] = await Promise.all([
     getParticipantById(participantId),
@@ -79,11 +90,19 @@ export default async function ParticipantPage({
             <p className="mt-1 text-sm text-white/70">Elegí un partido para cargar o revisar tu pronóstico.</p>
           </div>
           <Link
-            href="/"
+            href={`/p/${participantId}`}
             className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
           >
-            Cambiar participante
+            Mi pantalla
           </Link>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+            >
+              Salir
+            </button>
+          </form>
         </div>
       </header>
 

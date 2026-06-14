@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { MatchStage, PrismaClient } from "@prisma/client";
+import { MatchStage, Prisma, PrismaClient } from "@prisma/client";
+import { normalizeNameForLogin, slugifyParticipantName } from "../lib/auth/identity";
+import { hashPassword } from "../lib/auth/password";
 
 type FixtureTeam = {
   name: string;
@@ -50,7 +52,18 @@ if (!connectionString) {
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const PARTICIPANTS = ["Ramiro", "Pedro"] as const;
+const PARTICIPANTS = [
+  {
+    name: "Ramiro",
+    isAdmin: true,
+    initialPassword: process.env.RAMIRO_INITIAL_PASSWORD,
+  },
+  {
+    name: "Pedro",
+    isAdmin: false,
+    initialPassword: process.env.PEDRO_INITIAL_PASSWORD,
+  },
+] as const;
 
 const HISTORICAL_PREDICTIONS: HistoricalPrediction[] = [
   { participantName: "Pedro", matchNumber: 1, homeScore: 1, awayScore: 0 },
@@ -67,6 +80,8 @@ const HISTORICAL_PREDICTIONS: HistoricalPrediction[] = [
   { participantName: "Ramiro", matchNumber: 6, homeScore: 0, awayScore: 2 },
   { participantName: "Ramiro", matchNumber: 7, homeScore: 0, awayScore: 3 },
   { participantName: "Pedro", matchNumber: 7, homeScore: 0, awayScore: 2 },
+  { participantName: "Pedro", matchNumber: 8, homeScore: 0, awayScore: 2 },
+  { participantName: "Ramiro", matchNumber: 8, homeScore: 2, awayScore: 2 },
 ];
 
 const STAGE_MAP: Record<string, MatchStage> = {
@@ -87,11 +102,32 @@ function loadFixture(): FixtureData {
 async function main() {
   const fixture = loadFixture();
 
-  for (const participantName of PARTICIPANTS) {
+  for (const participant of PARTICIPANTS) {
+    const passwordHash = participant.initialPassword
+      ? await hashPassword(participant.initialPassword)
+      : undefined;
+    const authData: Prisma.ParticipantUpdateInput = {
+      active: true,
+      slug: slugifyParticipantName(participant.name),
+      normalizedName: normalizeNameForLogin(participant.name),
+      isAdmin: participant.isAdmin,
+    };
+
+    if (passwordHash) {
+      authData.passwordHash = passwordHash;
+    }
+
     await prisma.participant.upsert({
-      where: { name: participantName },
-      update: { active: true },
-      create: { name: participantName, active: true },
+      where: { name: participant.name },
+      update: authData,
+      create: {
+        name: participant.name,
+        slug: slugifyParticipantName(participant.name),
+        normalizedName: normalizeNameForLogin(participant.name),
+        passwordHash,
+        isAdmin: participant.isAdmin,
+        active: true,
+      },
     });
   }
 

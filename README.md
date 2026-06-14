@@ -16,6 +16,10 @@ Copiá `.env.example` a `.env.local` para desarrollo local.
   Conexión principal de la app. En Neon o Vercel Postgres puede ser la URL pooled/runtime.
 - `DIRECT_DATABASE_URL`
   Opcional pero recomendada para Prisma Migrate. Usá la URL directa/no pooled si el proveedor la expone.
+- `SESSION_SECRET`
+  Secreto largo para firmar la cookie de sesión. Es obligatorio en producción.
+- `RAMIRO_INITIAL_PASSWORD` y `PEDRO_INITIAL_PASSWORD`
+  Opcionales para que `npm run db:seed` setee contraseñas iniciales hasheadas para usuarios existentes. No uses valores reales en archivos committeados.
 
 También se aceptan los alias que suelen crear las integraciones de Vercel/Neon:
 
@@ -60,6 +64,9 @@ Comandos útiles:
 El seed:
 
 - crea participantes Ramiro y Pedro
+- deja a Ramiro como admin inicial
+- setea `slug` y `normalizedName`
+- si existen `RAMIRO_INITIAL_PASSWORD` o `PEDRO_INITIAL_PASSWORD`, guarda hashes de esas contraseñas
 - crea equipos desde `fixture.json`
 - crea los 104 partidos
 - crea los pronósticos históricos de los partidos 1 a 7
@@ -74,9 +81,30 @@ Local:
 Producción:
 
 - correr primero migraciones
-- correr seed solo si querés inicializar datos base en una base vacía
+- correr seed solo si querés inicializar datos base en una base vacía o setear explícitamente contraseñas iniciales
+- no correr seed en producción sin intención explícita
 
 El seed usa `DATABASE_URL` y cae en `DIRECT_DATABASE_URL` si no existe.
+
+## Autenticación simple
+
+La app usa una sesión familiar simple:
+
+- login en `/login`
+- usuario por nombre o slug
+- contraseña guardada como hash, nunca en texto plano
+- cookie `httpOnly` firmada
+- logout con botón "Salir"
+- `SESSION_SECRET` requerido en producción
+
+Para preparar usuarios existentes en una base nueva o controlada:
+
+1. Configurá `RAMIRO_INITIAL_PASSWORD` y/o `PEDRO_INITIAL_PASSWORD` en el entorno local o en Vercel.
+2. Ejecutá migraciones.
+3. Ejecutá `npm run db:seed` solo si querés aplicar esos datos iniciales.
+4. Quitá las variables temporales si ya no las necesitás.
+
+Usuarios sin `passwordHash` no pueden iniciar sesión hasta que se les defina una contraseña.
 
 ## Deploy
 
