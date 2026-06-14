@@ -399,44 +399,36 @@ export default async function ParticipantPage({
                 Mayor diferencia global entre pronóstico y resultado real.
               </p>
               {standingsStats.worstPredictions.length > 0 ? (
-                <div className="mt-3 flex flex-col gap-3">
-                  <div className="rounded-2xl border border-orange-200 bg-white/85 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-orange-950">
-                          {standingsStats.worstPredictions[0].participantName}
-                        </p>
-                        <p className="mt-1 text-sm text-orange-900">
-                          Partido{" "}
-                          {standingsStats.worstPredictions[0].matchNumber}:{" "}
-                          {standingsStats.worstPredictions[0].homeTeamName} vs{" "}
-                          {standingsStats.worstPredictions[0].awayTeamName}
-                        </p>
-                        <p className="mt-1 text-sm text-orange-900">
-                          Pronóstico{" "}
-                          {formatPredictionSummary(
-                            standingsStats.worstPredictions[0].prediction,
-                          )}{" "}
-                          · resultado{" "}
-                          {standingsStats.worstPredictions[0].result?.homeScore}{" "}
-                          -{" "}
-                          {standingsStats.worstPredictions[0].result?.awayScore}
-                        </p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {standingsStats.worstPredictions.map((worstPrediction) => (
+                    <div
+                      key={`${worstPrediction.participantId}-${worstPrediction.matchId}`}
+                      className="rounded-lg border border-orange-200 bg-white/80 p-2.5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-orange-950">
+                            {worstPrediction.participantName}
+                          </p>
+                          <p className="mt-0.5 text-xs text-orange-900">
+                            Partido {worstPrediction.matchNumber}:{" "}
+                            {worstPrediction.homeTeamName} vs{" "}
+                            {worstPrediction.awayTeamName}
+                          </p>
+                          <p className="mt-0.5 text-xs text-orange-900">
+                            {formatPredictionSummary(
+                              worstPrediction.prediction,
+                            )}{" "}
+                            vs {worstPrediction.result?.homeScore} -{" "}
+                            {worstPrediction.result?.awayScore}
+                          </p>
+                        </div>
+                        <span className="ml-2 flex-shrink-0 rounded-full bg-orange-200 px-2 py-0.5 text-xs font-semibold text-orange-950">
+                          {worstPrediction.distance} goles
+                        </span>
                       </div>
-                      <span className="rounded-full bg-orange-200 px-3 py-1 text-xs font-semibold text-orange-950">
-                        {standingsStats.worstPredictions[0].distance} goles
-                      </span>
                     </div>
-                  </div>
-                  {standingsStats.worstPredictions.length > 1 ? (
-                    <p className="text-sm text-orange-900/80">
-                      Hay {standingsStats.worstPredictions.length - 1} caso
-                      {standingsStats.worstPredictions.length === 2
-                        ? ""
-                        : "s"}{" "}
-                      más con la misma diferencia.
-                    </p>
-                  ) : null}
+                  ))}
                 </div>
               ) : (
                 <p className="mt-3 rounded-2xl bg-white/80 p-4 text-sm text-orange-900">
