@@ -65,6 +65,8 @@ export type MatchResultView = {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
+  createdByParticipantName?: string | null;
+  updatedByParticipantName?: string | null;
 };
 
 export type MatchReadModel = {
@@ -106,6 +108,8 @@ type ResultRecord = {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
+  createdByParticipant?: { name: string } | null;
+  updatedByParticipant?: { name: string } | null;
 } | null;
 
 type MatchRecord = {
@@ -146,6 +150,8 @@ function normalizeMatchResult(result: ResultRecord): MatchResultView | null {
     homeScore: result.homeScore,
     awayScore: result.awayScore,
     advancesTeamName: result.advancesTeamName,
+    createdByParticipantName: result.createdByParticipant?.name ?? null,
+    updatedByParticipantName: result.updatedByParticipant?.name ?? null,
   };
 }
 
@@ -505,6 +511,16 @@ export async function getParticipantMatches(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          createdByParticipant: {
+            select: {
+              name: true,
+            },
+          },
+          updatedByParticipant: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },

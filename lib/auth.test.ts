@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { changeParticipantPassword } from "./auth/change-password";
 import { authenticateParticipant } from "./auth/login";
 import { hashPassword, verifyPassword } from "./auth/password";
 import {
@@ -14,6 +15,26 @@ function createPrismaStub(participant: unknown) {
     participant: {
       findFirst: async () => participant,
       findUnique: async () => participant,
+    },
+  };
+}
+
+function createMutableParticipantPrisma(participant: {
+  id: string;
+  active: boolean;
+  passwordHash: string | null;
+}) {
+  return {
+    participant: {
+      findFirst: async () => participant,
+      findUnique: async () => participant,
+      update: async ({ data }: { data: { passwordHash?: string } }) => {
+        if (data.passwordHash !== undefined) {
+          participant.passwordHash = data.passwordHash;
+        }
+
+        return participant;
+      },
     },
   };
 }
@@ -114,6 +135,15 @@ describe("session helpers", () => {
     ).rejects.toThrow("NEXT_REDIRECT");
   });
 
+  it("requireAdmin rejects without a valid session", async () => {
+    await expect(
+      requireAdmin({
+        cookieValue: null,
+        prismaClient: createPrismaStub(null) as never,
+      }),
+    ).rejects.toThrow("NEXT_REDIRECT");
+  });
+
   it("requireAdmin rejects a normal participant", async () => {
     const token = createSessionToken("pedro", new Date("2026-06-14T12:00:00.000Z"));
 
@@ -149,5 +179,98 @@ describe("session helpers", () => {
         prismaClient: createPrismaStub(participant) as never,
       }),
     ).resolves.toEqual(participant);
+  });
+});
+
+describe("change participant password", () => {
+  it("changes the password with the correct current password", async () => {
+    const participant = {
+      id: "ramiro",
+      active: true,
+      passwordHash: await hashPassword("vieja", { iterations: 1_000 }),
+    };
+    const prisma = createMutableParticipantPrisma(participant);
+
+    await expect(
+      changeParticipantPassword({
+        participantId: "ramiro",
+        currentPassword: "vieja",
+        newPassword: "nueva",
+        confirmPassword: "nueva",
+        prismaClient: prisma as never,
+      }),
+    ).resolves.toEqual({
+      status: "success",
+      message: "Contraseña actualizada.",
+    });
+
+    await expect(verifyPassword("nueva", participant.passwordHash)).resolves.toBe(true);
+    await expect(verifyPassword("vieja", participant.passwordHash)).resolves.toBe(false);
+  });
+
+  it("rejects an incorrect current password", async () => {
+    const participant = {
+      id: "ramiro",
+      active: true,
+      passwordHash: await hashPassword("vieja", { iterations: 1_000 }),
+    };
+
+    await expect(
+      changeParticipantPassword({
+        participantId: "ramiro",
+        currentPassword: "incorrecta",
+        newPassword: "nueva",
+        confirmPassword: "nueva",
+        prismaClient: createMutableParticipantPrisma(participant) as never,
+      }),
+    ).resolves.toEqual({
+      status: "error",
+      message: "La contraseña actual no es correcta.",
+    });
+  });
+
+  it("rejects a different confirmation", async () => {
+    const participant = {
+      id: "ramiro",
+      active: true,
+      passwordHash: await hashPassword("vieja", { iterations: 1_000 }),
+    };
+
+    await expect(
+      changeParticipantPassword({
+        participantId: "ramiro",
+        currentPassword: "vieja",
+        newPassword: "nueva",
+        confirmPassword: "otra",
+        prismaClient: createMutableParticipantPrisma(participant) as never,
+      }),
+    ).resolves.toEqual({
+      status: "error",
+      message: "Las contraseñas nuevas no coinciden.",
+    });
+  });
+
+  it("allows login with the new password and rejects the old one", async () => {
+    const participant = {
+      id: "ramiro",
+      active: true,
+      passwordHash: await hashPassword("vieja", { iterations: 1_000 }),
+    };
+    const prisma = createMutableParticipantPrisma(participant);
+
+    await changeParticipantPassword({
+      participantId: "ramiro",
+      currentPassword: "vieja",
+      newPassword: "nueva",
+      confirmPassword: "nueva",
+      prismaClient: prisma as never,
+    });
+
+    await expect(
+      authenticateParticipant("Ramiro", "nueva", prisma as never),
+    ).resolves.toEqual(participant);
+    await expect(
+      authenticateParticipant("Ramiro", "vieja", prisma as never),
+    ).resolves.toBeNull();
   });
 });

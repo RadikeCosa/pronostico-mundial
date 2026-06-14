@@ -1,12 +1,14 @@
 import { LocalDateTime } from "@/components/local-date-time";
 import { ResultForm } from "@/components/result-form";
-import { formatStageLabel } from "@/lib/presentation";
+import { requireAdmin } from "@/lib/auth/session";
+import { formatResultTrace, formatStageLabel } from "@/lib/presentation";
 import { getAdminResultsGroupedByDay } from "@/lib/read-models";
 import { upsertMatchResultAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminResultsPage() {
+  await requireAdmin();
   const groupedMatches = await getAdminResultsGroupedByDay();
 
   return (
@@ -15,7 +17,7 @@ export default async function AdminResultsPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-white/70">Admin simple</p>
         <h1 className="mt-2 text-3xl font-semibold">Carga manual de resultados</h1>
         <p className="mt-2 max-w-2xl text-sm text-white/75">
-          Esta ruta no tiene auth en v1. Los resultados impactan directo en la tabla de puntos.
+          Solo administradores pueden cargar resultados. Los resultados impactan directo en la tabla de puntos.
         </p>
       </header>
 
@@ -31,6 +33,7 @@ export default async function AdminResultsPage() {
               {group.matches.map((match) => {
                 const action = upsertMatchResultAction.bind(null, match.id);
                 const showAdvancingTeamField = match.stage !== "GROUP";
+                const resultTrace = formatResultTrace(match.result);
 
                 return (
                   <article
@@ -69,19 +72,28 @@ export default async function AdminResultsPage() {
                               }`
                             : "Sin cargar"}
                         </p>
+                        {resultTrace ? (
+                          <p className="text-xs text-zinc-500">{resultTrace}</p>
+                        ) : null}
                       </div>
 
-                      <ResultForm
-                        action={action}
-                        defaultValues={{
-                          homeScore: match.result?.homeScore ?? null,
-                          awayScore: match.result?.awayScore ?? null,
-                          advancesTeamName: match.result?.advancesTeamName ?? null,
-                        }}
-                        homeTeamName={match.homeTeamName}
-                        awayTeamName={match.awayTeamName}
-                        showAdvancingTeamField={showAdvancingTeamField}
-                      />
+                      {match.isLocked ? (
+                        <ResultForm
+                          action={action}
+                          defaultValues={{
+                            homeScore: match.result?.homeScore ?? null,
+                            awayScore: match.result?.awayScore ?? null,
+                            advancesTeamName: match.result?.advancesTeamName ?? null,
+                          }}
+                          homeTeamName={match.homeTeamName}
+                          awayTeamName={match.awayTeamName}
+                          showAdvancingTeamField={showAdvancingTeamField}
+                        />
+                      ) : (
+                        <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+                          Disponible desde el inicio del partido.
+                        </section>
+                      )}
                     </div>
                   </article>
                 );

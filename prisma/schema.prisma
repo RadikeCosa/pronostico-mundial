@@ -25,6 +25,8 @@ model Participant {
   isAdmin        Boolean      @default(false)
   active         Boolean      @default(true)
   predictions    Prediction[]
+  resultsCreated MatchResult[] @relation("MatchResultCreatedBy")
+  resultsUpdated MatchResult[] @relation("MatchResultUpdatedBy")
   lastLoginAt    DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -73,12 +75,16 @@ model Prediction {
 }
 
 model MatchResult {
-  id               String   @id @default(cuid())
-  matchId          String   @unique
-  homeScore        Int
-  awayScore        Int
-  advancesTeamName String?
-  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                     String       @id @default(cuid())
+  matchId                String       @unique
+  homeScore              Int
+  awayScore              Int
+  advancesTeamName       String?
+  createdByParticipantId String?
+  updatedByParticipantId String?
+  match                  Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  createdByParticipant   Participant? @relation("MatchResultCreatedBy", fields: [createdByParticipantId], references: [id], onDelete: SetNull)
+  updatedByParticipant   Participant? @relation("MatchResultUpdatedBy", fields: [updatedByParticipantId], references: [id], onDelete: SetNull)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 }

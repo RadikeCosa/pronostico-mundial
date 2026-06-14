@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMatchReadModel,
   buildStandingsTable,
+  getAdminResultsGroupedByDay,
   getMatchDay,
   groupMatchesByDay,
   isMatchLocked,
@@ -316,5 +317,42 @@ describe("read models", () => {
       "predictedMatches",
       "totalPoints",
     ]);
+  });
+
+  it("exposes result traceability names in admin results read model", async () => {
+    const groupedMatches = await getAdminResultsGroupedByDay(
+      new Date("2026-06-14T12:00:00.000Z"),
+      {
+        match: {
+          findMany: async () => [
+            {
+              id: "m1",
+              matchNumber: 1,
+              stage: "GROUP",
+              groupName: "A",
+              homeTeamName: "Mexico",
+              awayTeamName: "South Africa",
+              kickoffAt: new Date("2026-06-14T11:00:00.000Z"),
+              venue: null,
+              city: null,
+              result: {
+                homeScore: 2,
+                awayScore: 1,
+                advancesTeamName: null,
+                createdByParticipant: { name: "Ramiro" },
+                updatedByParticipant: { name: "Pedro" },
+              },
+            },
+          ],
+        },
+      } as never,
+    );
+
+    expect(groupedMatches[0].matches[0].result).toMatchObject({
+      homeScore: 2,
+      awayScore: 1,
+      createdByParticipantName: "Ramiro",
+      updatedByParticipantName: "Pedro",
+    });
   });
 });

@@ -31,6 +31,24 @@ export function formatPredictionSummary(prediction: {
   return `${score} · clasifica ${prediction.advancesTeamName}`;
 }
 
+export function formatResultTrace(result: {
+  createdByParticipantName?: string | null;
+  updatedByParticipantName?: string | null;
+} | null): string | null {
+  if (!result?.createdByParticipantName) {
+    return null;
+  }
+
+  if (
+    !result.updatedByParticipantName ||
+    result.updatedByParticipantName === result.createdByParticipantName
+  ) {
+    return `Agregado por ${result.createdByParticipantName}`;
+  }
+
+  return `Agregado por ${result.createdByParticipantName} · editado por ${result.updatedByParticipantName}`;
+}
+
 export function getMatchStatusLabel(match: Pick<MatchListItem, "isLocked"> & { hasResult?: boolean }): string {
   if (match.hasResult) {
     return "Con resultado";

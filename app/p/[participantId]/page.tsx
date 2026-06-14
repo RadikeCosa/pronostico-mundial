@@ -95,6 +95,12 @@ export default async function ParticipantPage({
           >
             Mi pantalla
           </Link>
+          <Link
+            href="/account/password"
+            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+          >
+            Contraseña
+          </Link>
           <form action={logoutAction}>
             <button
               type="submit"
