@@ -1,7 +1,8 @@
-import { formatMatchDayLabel, LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTime } from "@/components/local-date-time";
 import Link from "next/link";
 import { ResultForm } from "@/components/result-form";
 import { requireAdmin } from "@/lib/auth/session";
+import { formatMatchDayLabel } from "@/lib/date-format";
 import { formatResultTrace, formatStageLabel } from "@/lib/presentation";
 import { getAdminResultsGroupedByDay } from "@/lib/read-models";
 import { upsertMatchResultAction } from "./actions";

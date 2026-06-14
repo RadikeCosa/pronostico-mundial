@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { formatMatchDayLabel, LocalDateTime } from "@/components/local-date-time";
+import { LocalDateTime } from "@/components/local-date-time";
 import { getCurrentParticipant } from "@/lib/auth/session";
+import { formatMatchDayLabel } from "@/lib/date-format";
 import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
 import {
   getMatchDay,
