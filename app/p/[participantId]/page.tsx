@@ -42,6 +42,14 @@ function formatAveragePoints(value: number): string {
   });
 }
 
+function getInitialSelectedDay(days: string[], today: string): string | undefined {
+  if (days.includes(today)) {
+    return today;
+  }
+
+  return days.find((day) => day > today) ?? days.at(-1);
+}
+
 export default async function ParticipantPage({
   params,
   searchParams,
@@ -71,11 +79,12 @@ export default async function ParticipantPage({
   }
 
   const days = [...new Set(matches.map((match) => getMatchDay(match.kickoffAt)))];
+  const today = getMatchDay(now);
   const groups = [...new Set(matches.map((match) => match.groupName).filter((groupName): groupName is string => Boolean(groupName)))];
   const selectedDay =
     resolvedSearchParams.day && days.includes(resolvedSearchParams.day)
       ? resolvedSearchParams.day
-      : days[0];
+      : getInitialSelectedDay(days, today);
   const selectedGroup =
     resolvedSearchParams.group && groups.includes(resolvedSearchParams.group)
       ? resolvedSearchParams.group
@@ -165,42 +174,28 @@ export default async function ParticipantPage({
         </Link>
       </nav>
 
-      {currentParticipant.isAdmin ? (
-        <section className="flex flex-col gap-3 rounded-[2rem] border border-amber-200 bg-amber-50 p-5 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold">Resultados de partidos jugados</h2>
-            <p className="mt-1 text-sm text-amber-900/80">
-              Entrá al panel para cargar o corregir marcadores. Los partidos futuros se habilitan desde el inicio.
-            </p>
-          </div>
-          <Link
-            href="/admin/results"
-            className="rounded-full bg-black px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-zinc-800"
-          >
-            Ir a cargar resultados
-          </Link>
-          <Link
-            href="/admin/participants"
-            className="rounded-full border border-black/20 px-4 py-3 text-center text-sm font-semibold text-amber-950 transition hover:bg-amber-100"
-          >
-            Crear usuario
-          </Link>
-        </section>
-      ) : null}
-
       {view === "day" ? (
         <section className="flex flex-wrap gap-2">
-          {days.map((day) => (
-            <Link
-              key={day}
-              href={buildHref(participantId, "day", day)}
-              className={`rounded-full px-4 py-2 text-sm ${
-                selectedDay === day ? "bg-amber-300 text-black" : "bg-white text-zinc-700 ring-1 ring-black/10"
-              }`}
-            >
-              {formatMatchDayLabel(`${day}T12:00:00`)}
-            </Link>
-          ))}
+          {days.map((day) => {
+            const isSelected = selectedDay === day;
+            const isPastDay = day < today;
+
+            return (
+              <Link
+                key={day}
+                href={buildHref(participantId, "day", day)}
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  isSelected
+                    ? "bg-amber-300 text-black"
+                    : isPastDay
+                      ? "bg-zinc-100 text-zinc-400 ring-1 ring-black/5"
+                      : "bg-white text-zinc-700 ring-1 ring-black/10 hover:bg-zinc-50"
+                }`}
+              >
+                {formatMatchDayLabel(`${day}T12:00:00`)}
+              </Link>
+            );
+          })}
         </section>
       ) : null}
 
@@ -262,11 +257,18 @@ export default async function ParticipantPage({
         </section>
       ) : (
         <section className="grid gap-4">
-          {visibleMatches.map((match) => (
-            <article
-              key={match.id}
-              className="rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm"
-            >
+          {visibleMatches.map((match) => {
+            const isPastMatchDay = getMatchDay(match.kickoffAt) < today;
+
+            return (
+              <article
+                key={match.id}
+                className={`rounded-[2rem] border p-5 shadow-sm transition ${
+                  isPastMatchDay
+                    ? "border-black/5 bg-zinc-50 opacity-75 grayscale-[20%]"
+                    : "border-black/10 bg-white"
+                }`}
+              >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
@@ -313,7 +315,8 @@ export default async function ParticipantPage({
                 ) : null}
               </div>
             </article>
-          ))}
+            );
+          })}
         </section>
       )}
     </main>
