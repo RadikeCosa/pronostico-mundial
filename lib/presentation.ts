@@ -14,6 +14,16 @@ export function formatStageLabel(stage: string): string {
   return stageLabels[stage] ?? stage.replaceAll("_", " ");
 }
 
+export function formatParticipantName(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("es")
+    .replace(/(^|[\s-])(\p{L})/gu, (_match, prefix: string, letter: string) => {
+      return `${prefix}${letter.toLocaleUpperCase("es")}`;
+    });
+}
+
 export function formatPredictionSummary(prediction: {
   homeScore: number;
   awayScore: number;

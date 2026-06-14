@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { PrismaClient } from "@prisma/client";
 import { getPrismaClient } from "../prisma";
+import { formatParticipantName } from "../presentation";
 
 export const SESSION_COOKIE_NAME = "pronosticos_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -143,7 +144,10 @@ export async function getCurrentParticipant(
     return null;
   }
 
-  return participant;
+  return {
+    ...participant,
+    name: formatParticipantName(participant.name),
+  };
 }
 
 export async function requireParticipant(

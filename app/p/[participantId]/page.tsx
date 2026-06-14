@@ -35,6 +35,13 @@ function buildHref(participantId: string, view: string, value?: string) {
   return `/p/${participantId}?view=standings`;
 }
 
+function formatAveragePoints(value: number): string {
+  return value.toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default async function ParticipantPage({
   params,
   searchParams,
@@ -220,7 +227,9 @@ export default async function ParticipantPage({
               <thead className="bg-zinc-950 text-left text-white">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Jugador</th>
+                  <th className="px-4 py-3 font-semibold">Promedio</th>
                   <th className="px-4 py-3 font-semibold">Puntos</th>
+                  <th className="px-4 py-3 font-semibold">Partidos puntuados</th>
                   <th className="px-4 py-3 font-semibold">Resultados exactos</th>
                   <th className="px-4 py-3 font-semibold">Ganador o empate</th>
                   <th className="px-4 py-3 font-semibold">Partidos pronosticados</th>
@@ -236,7 +245,11 @@ export default async function ParticipantPage({
                     }`}
                   >
                     <td className="px-4 py-4 font-semibold text-zinc-950">{row.participantName}</td>
+                    <td className="px-4 py-4 text-lg font-bold text-zinc-950">
+                      {formatAveragePoints(row.averagePoints)}
+                    </td>
                     <td className="px-4 py-4 text-lg font-bold text-zinc-950">{row.totalPoints}</td>
+                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.scoredPredictions}</td>
                     <td className="px-4 py-4 font-semibold text-zinc-950">{row.exactCount}</td>
                     <td className="px-4 py-4 font-semibold text-zinc-950">{row.outcomeCount}</td>
                     <td className="px-4 py-4 font-semibold text-zinc-950">{row.predictedMatches}</td>

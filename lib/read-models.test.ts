@@ -273,6 +273,8 @@ describe("read models", () => {
         participantId: "pedro",
         participantName: "Pedro",
         totalPoints: 1,
+        averagePoints: 1,
+        scoredPredictions: 1,
         exactCount: 0,
         outcomeCount: 1,
         predictedMatches: 1,
@@ -282,6 +284,8 @@ describe("read models", () => {
         participantId: "ramiro",
         participantName: "Ramiro",
         totalPoints: 0,
+        averagePoints: 0,
+        scoredPredictions: 1,
         exactCount: 0,
         outcomeCount: 0,
         predictedMatches: 2,
@@ -292,7 +296,7 @@ describe("read models", () => {
 
   it("returns only aggregate information in standings rows", () => {
     const standings = buildStandingsTable({
-      participants: [{ id: "ramiro", name: "Ramiro" }],
+      participants: [{ id: "ramiro", name: "ramiro" }],
       matches: [],
       now: new Date("2026-06-14T00:00:00.000Z"),
     });
@@ -302,6 +306,8 @@ describe("read models", () => {
         participantId: "ramiro",
         participantName: "Ramiro",
         totalPoints: 0,
+        averagePoints: 0,
+        scoredPredictions: 0,
         exactCount: 0,
         outcomeCount: 0,
         predictedMatches: 0,
@@ -309,14 +315,73 @@ describe("read models", () => {
       },
     ]);
     expect(Object.keys(standings[0]).sort()).toEqual([
+      "averagePoints",
       "exactCount",
       "missedLockedMatches",
       "outcomeCount",
       "participantId",
       "participantName",
       "predictedMatches",
+      "scoredPredictions",
       "totalPoints",
     ]);
+  });
+
+  it("sorts standings by average points before total points", () => {
+    const standings = buildStandingsTable({
+      participants: [
+        { id: "ramiro", name: "Ramiro" },
+        { id: "pedro", name: "Pedro" },
+      ],
+      matches: [
+        {
+          id: "m1",
+          matchNumber: 1,
+          stage: "GROUP",
+          groupName: "A",
+          homeTeamName: "Mexico",
+          awayTeamName: "South Africa",
+          kickoffAt: new Date("2026-06-12T03:00:00.000Z"),
+          venue: null,
+          city: null,
+          predictions: [
+            { participantId: "ramiro", homeScore: 2, awayScore: 1, advancesTeamName: null },
+            { participantId: "pedro", homeScore: 2, awayScore: 1, advancesTeamName: null },
+          ],
+          result: { homeScore: 2, awayScore: 1, advancesTeamName: null },
+        },
+        {
+          id: "m2",
+          matchNumber: 2,
+          stage: "GROUP",
+          groupName: "A",
+          homeTeamName: "Korea Republic",
+          awayTeamName: "Czechia",
+          kickoffAt: new Date("2026-06-13T03:00:00.000Z"),
+          venue: null,
+          city: null,
+          predictions: [
+            { participantId: "ramiro", homeScore: 1, awayScore: 0, advancesTeamName: null },
+          ],
+          result: { homeScore: 2, awayScore: 0, advancesTeamName: null },
+        },
+      ],
+      now: new Date("2026-06-14T00:00:00.000Z"),
+    });
+
+    expect(standings.map((row) => row.participantName)).toEqual(["Pedro", "Ramiro"]);
+    expect(standings[0]).toMatchObject({
+      participantName: "Pedro",
+      totalPoints: 3,
+      averagePoints: 3,
+      scoredPredictions: 1,
+    });
+    expect(standings[1]).toMatchObject({
+      participantName: "Ramiro",
+      totalPoints: 4,
+      averagePoints: 2,
+      scoredPredictions: 2,
+    });
   });
 
   it("exposes result traceability names in admin results read model", async () => {
@@ -339,8 +404,8 @@ describe("read models", () => {
                 homeScore: 2,
                 awayScore: 1,
                 advancesTeamName: null,
-                createdByParticipant: { name: "Ramiro" },
-                updatedByParticipant: { name: "Pedro" },
+                createdByParticipant: { name: "ramiro" },
+                updatedByParticipant: { name: "PEDRO" },
               },
             },
           ],

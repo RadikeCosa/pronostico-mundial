@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminParticipantCreateForm } from "@/components/admin-participant-create-form";
 import { requireAdmin } from "@/lib/auth/session";
+import { formatParticipantName } from "@/lib/presentation";
 import { getPrismaClient } from "@/lib/prisma";
 import { createAdminParticipantAction } from "./actions";
 
@@ -63,7 +64,9 @@ export default async function AdminParticipantsPage() {
                       index % 2 === 0 ? "bg-white" : "bg-zinc-50"
                     }`}
                   >
-                    <td className="px-4 py-4 font-semibold">{participant.name}</td>
+                    <td className="px-4 py-4 font-semibold">
+                      {formatParticipantName(participant.name)}
+                    </td>
                     <td className="px-4 py-4">
                       {participant.isAdmin ? "Admin" : "Participante"}
                     </td>

@@ -105,7 +105,7 @@ describe("session helpers", () => {
     const token = createSessionToken("ramiro", new Date("2026-06-14T12:00:00.000Z"));
     const participant = {
       id: "ramiro",
-      name: "Ramiro",
+      name: "ramiro",
       slug: "ramiro",
       active: true,
       isAdmin: true,
@@ -117,7 +117,10 @@ describe("session helpers", () => {
         now: new Date("2026-06-14T12:00:01.000Z"),
         prismaClient: createPrismaStub(participant) as never,
       }),
-    ).resolves.toEqual(participant);
+    ).resolves.toEqual({
+      ...participant,
+      name: "Ramiro",
+    });
   });
 
   it("returns null for an expired session", () => {

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { calculatePredictionScore, type ScoreBreakdown } from "./scoring";
 import { getPrismaClient } from "./prisma";
+import { formatParticipantName } from "./presentation";
 
 export type ActiveParticipant = {
   id: string;
@@ -86,6 +87,8 @@ export type StandingsRow = {
   participantId: string;
   participantName: string;
   totalPoints: number;
+  averagePoints: number;
+  scoredPredictions: number;
   exactCount: number;
   outcomeCount: number;
   predictedMatches: number;
@@ -150,8 +153,12 @@ function normalizeMatchResult(result: ResultRecord): MatchResultView | null {
     homeScore: result.homeScore,
     awayScore: result.awayScore,
     advancesTeamName: result.advancesTeamName,
-    createdByParticipantName: result.createdByParticipant?.name ?? null,
-    updatedByParticipantName: result.updatedByParticipant?.name ?? null,
+    createdByParticipantName: result.createdByParticipant?.name
+      ? formatParticipantName(result.createdByParticipant.name)
+      : null,
+    updatedByParticipantName: result.updatedByParticipant?.name
+      ? formatParticipantName(result.updatedByParticipant.name)
+      : null,
   };
 }
 
@@ -282,7 +289,7 @@ export function buildVisiblePredictions(args: {
 
     return {
       participantId: participant.id,
-      participantName: participant.name,
+      participantName: formatParticipantName(participant.name),
       status: prediction ? "submitted" : "missing",
       prediction: normalizePrediction(prediction),
       score,
@@ -334,6 +341,7 @@ export function buildStandingsTable(args: {
 
   const rows = participants.map((participant) => {
     let totalPoints = 0;
+    let scoredPredictions = 0;
     let exactCount = 0;
     let outcomeCount = 0;
     let predictedMatches = 0;
@@ -348,6 +356,10 @@ export function buildStandingsTable(args: {
         predictedMatches += 1;
       } else if (isMatchLocked(match.kickoffAt, now)) {
         missedLockedMatches += 1;
+      }
+
+      if (prediction && match.result) {
+        scoredPredictions += 1;
       }
 
       const score = calculatePredictionScore(
@@ -381,8 +393,10 @@ export function buildStandingsTable(args: {
 
     return {
       participantId: participant.id,
-      participantName: participant.name,
+      participantName: formatParticipantName(participant.name),
       totalPoints,
+      averagePoints: scoredPredictions > 0 ? totalPoints / scoredPredictions : 0,
+      scoredPredictions,
       exactCount,
       outcomeCount,
       predictedMatches,
@@ -391,6 +405,10 @@ export function buildStandingsTable(args: {
   });
 
   return rows.sort((left, right) => {
+    if (right.averagePoints !== left.averagePoints) {
+      return right.averagePoints - left.averagePoints;
+    }
+
     if (right.totalPoints !== left.totalPoints) {
       return right.totalPoints - left.totalPoints;
     }
@@ -410,7 +428,7 @@ export function buildStandingsTable(args: {
 export async function listActiveParticipants(
   prismaClient: PrismaClient = getPrismaClient(),
 ): Promise<ActiveParticipant[]> {
-  return prismaClient.participant.findMany({
+  const participants = await prismaClient.participant.findMany({
     where: { active: true },
     orderBy: { name: "asc" },
     select: {
@@ -418,13 +436,18 @@ export async function listActiveParticipants(
       name: true,
     },
   });
+
+  return participants.map((participant) => ({
+    ...participant,
+    name: formatParticipantName(participant.name),
+  }));
 }
 
 export async function getParticipantById(
   participantId: string,
   prismaClient: PrismaClient = getPrismaClient(),
 ): Promise<ParticipantSummary | null> {
-  return prismaClient.participant.findUnique({
+  const participant = await prismaClient.participant.findUnique({
     where: { id: participantId },
     select: {
       id: true,
@@ -432,6 +455,13 @@ export async function getParticipantById(
       active: true,
     },
   });
+
+  return participant
+    ? {
+        ...participant,
+        name: formatParticipantName(participant.name),
+      }
+    : null;
 }
 
 export async function getMatchesGroupedByDay(
@@ -672,6 +702,16 @@ export async function getAdminResultsGroupedByDay(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          createdByParticipant: {
+            select: {
+              name: true,
+            },
+          },
+          updatedByParticipant: {
+            select: {
+              name: true,
+            },
+          },
         },
       },
     },

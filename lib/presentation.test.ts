@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatResultTrace } from "./presentation";
+import { formatParticipantName, formatResultTrace } from "./presentation";
+
+describe("formatParticipantName", () => {
+  it("capitalizes participant names for display", () => {
+    expect(formatParticipantName("ramiro")).toBe("Ramiro");
+    expect(formatParticipantName("PEDRO")).toBe("Pedro");
+    expect(formatParticipantName("  ana   maría  ")).toBe("Ana María");
+  });
+});
 
 describe("formatResultTrace", () => {
   it("shows the creator when there is no separate editor", () => {
