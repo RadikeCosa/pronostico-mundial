@@ -23,7 +23,9 @@ export default async function AdminParticipantsPage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
       <header className="rounded-[2rem] bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
-        <p className="text-sm uppercase tracking-[0.2em] text-white/70">Admin simple</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-white/70">
+          Administración simple
+        </p>
         <h1 className="mt-2 text-3xl font-semibold">Usuarios</h1>
         <p className="mt-2 max-w-2xl text-sm text-white/75">
           Agregá participantes con una contraseña inicial para que puedan entrar.
@@ -68,7 +70,7 @@ export default async function AdminParticipantsPage() {
                       {formatParticipantName(participant.name)}
                     </td>
                     <td className="px-4 py-4">
-                      {participant.isAdmin ? "Admin" : "Participante"}
+                      {participant.isAdmin ? "Administrador" : "Participante"}
                     </td>
                     <td className="px-4 py-4">
                       {participant.active ? "Activo" : "Inactivo"}

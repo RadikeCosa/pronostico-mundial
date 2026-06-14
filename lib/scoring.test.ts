@@ -43,7 +43,7 @@ describe("calculatePredictionScore", () => {
       outcome: 0,
       advances: 0,
       total: 3,
-      reason: "Exact score in group stage.",
+      reason: "Resultado exacto en fase de grupos.",
     });
   });
 
@@ -68,7 +68,7 @@ describe("calculatePredictionScore", () => {
 
     expect(score.total).toBe(1);
     expect(score.outcome).toBe(1);
-    expect(score.reason).toBe("Correct match outcome in group stage.");
+    expect(score.reason).toBe("Ganador o empate acertado en fase de grupos.");
   });
 
   it("returns 0 for the wrong outcome in group stage", () => {
@@ -79,7 +79,7 @@ describe("calculatePredictionScore", () => {
     );
 
     expect(score.total).toBe(0);
-    expect(score.reason).toBe("Incorrect match outcome in group stage.");
+    expect(score.reason).toBe("Ganador o empate no acertado en fase de grupos.");
   });
 
   it("returns 0 with a clear reason when there is no result", () => {
@@ -94,7 +94,7 @@ describe("calculatePredictionScore", () => {
       outcome: 0,
       advances: 0,
       total: 0,
-      reason: "Match result is not available yet.",
+      reason: "Todavía no hay resultado cargado.",
     });
   });
 
@@ -110,7 +110,7 @@ describe("calculatePredictionScore", () => {
       outcome: 0,
       advances: 0,
       total: 0,
-      reason: "No prediction submitted.",
+      reason: "No cargó pronóstico.",
     });
   });
 
@@ -126,7 +126,7 @@ describe("calculatePredictionScore", () => {
       outcome: 0,
       advances: 1,
       total: 4,
-      reason: "Exact draw and correct advancing team in knockout match.",
+      reason: "Empate exacto y clasificado acertado en eliminación directa.",
     });
   });
 
@@ -140,7 +140,7 @@ describe("calculatePredictionScore", () => {
     expect(score.total).toBe(3);
     expect(score.advances).toBe(0);
     expect(score.reason).toBe(
-      "Exact draw in knockout match, but advancing team was not correct.",
+      "Empate exacto, pero el clasificado no fue acertado.",
     );
   });
 
@@ -157,7 +157,7 @@ describe("calculatePredictionScore", () => {
       advances: 1,
       total: 1,
       reason:
-        "Knockout draw predicted without the exact score, but with the correct advancing team.",
+        "Empate pronosticado sin resultado exacto, pero con clasificado acertado.",
     });
   });
 

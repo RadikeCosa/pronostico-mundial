@@ -120,7 +120,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             <h2 className="text-lg font-semibold text-zinc-950">Pronósticos visibles</h2>
             {!matchReadModel.canRevealPredictions ? (
               <p className="mt-2 text-sm text-zinc-600">
-                Los pronósticos de los demás participantes se revelan desde el kickoff.
+                Los pronósticos de los demás participantes se revelan desde el inicio del partido.
               </p>
             ) : (
               <div className="mt-4 flex flex-col gap-3">
@@ -142,7 +142,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                       </div>
                       {visiblePrediction.score ? (
                         <span className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">
-                          {visiblePrediction.score.total} pts
+                          {visiblePrediction.score.total} puntos
                         </span>
                       ) : null}
                     </div>

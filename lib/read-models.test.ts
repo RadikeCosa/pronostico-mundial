@@ -155,7 +155,7 @@ describe("read models", () => {
           outcome: 0,
           advances: 1,
           total: 4,
-          reason: "Exact draw and correct advancing team in knockout match.",
+          reason: "Empate exacto y clasificado acertado en eliminación directa.",
         },
       },
       {
@@ -168,7 +168,7 @@ describe("read models", () => {
           outcome: 0,
           advances: 0,
           total: 0,
-          reason: "No prediction submitted.",
+          reason: "No cargó pronóstico.",
         },
       },
     ]);

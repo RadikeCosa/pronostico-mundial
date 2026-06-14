@@ -16,7 +16,9 @@ export default async function AdminResultsPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
       <header className="rounded-[2rem] bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
-        <p className="text-sm uppercase tracking-[0.2em] text-white/70">Admin simple</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-white/70">
+          Administración simple
+        </p>
         <h1 className="mt-2 text-3xl font-semibold">Carga manual de resultados</h1>
         <p className="mt-2 max-w-2xl text-sm text-white/75">
           Solo administradores pueden cargar resultados. Los resultados impactan directo en la tabla de puntos.

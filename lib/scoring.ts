@@ -62,7 +62,7 @@ export function calculatePredictionScore(
       outcome: 0,
       advances: 0,
       total: 0,
-      reason: "No prediction submitted.",
+      reason: "No cargó pronóstico.",
     };
   }
 
@@ -72,7 +72,7 @@ export function calculatePredictionScore(
       outcome: 0,
       advances: 0,
       total: 0,
-      reason: "Match result is not available yet.",
+      reason: "Todavía no hay resultado cargado.",
     };
   }
 
@@ -85,7 +85,7 @@ export function calculatePredictionScore(
         outcome: 0,
         advances: 0,
         total: 3,
-        reason: "Exact score in group stage.",
+        reason: "Resultado exacto en fase de grupos.",
       };
     }
 
@@ -100,8 +100,8 @@ export function calculatePredictionScore(
       total: outcome,
       reason:
         outcome === 1
-          ? "Correct match outcome in group stage."
-          : "Incorrect match outcome in group stage.",
+          ? "Ganador o empate acertado en fase de grupos."
+          : "Ganador o empate no acertado en fase de grupos.",
     };
   }
 
@@ -125,8 +125,8 @@ export function calculatePredictionScore(
       total: advancesOnlyPoint,
       reason:
         advancesOnlyPoint === 1
-          ? "Knockout draw predicted without the exact score, but with the correct advancing team."
-          : "Knockout match without an exact score or qualifying advancing-team bonus.",
+          ? "Empate pronosticado sin resultado exacto, pero con clasificado acertado."
+          : "Sin resultado exacto ni bonus de clasificado.",
     };
   }
 
@@ -137,7 +137,7 @@ export function calculatePredictionScore(
       outcome: 0,
       advances: 0,
       total: 3,
-      reason: "Exact score in knockout match.",
+      reason: "Resultado exacto en eliminación directa.",
     };
   }
 
@@ -152,7 +152,7 @@ export function calculatePredictionScore(
     total: exactScore + advances,
     reason:
       advances === 1
-        ? "Exact draw and correct advancing team in knockout match."
-        : "Exact draw in knockout match, but advancing team was not correct.",
+        ? "Empate exacto y clasificado acertado en eliminación directa."
+        : "Empate exacto, pero el clasificado no fue acertado.",
   };
 }

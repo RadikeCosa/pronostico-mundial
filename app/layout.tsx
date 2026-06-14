@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pronosticos Mundial",
-  description: "App familiar de pronosticos para el Mundial 2026.",
+  title: "Pronósticos Mundial",
+  description: "App familiar de pronósticos para el Mundial 2026.",
 };
 
 export default function RootLayout({
