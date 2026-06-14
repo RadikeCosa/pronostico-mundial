@@ -1,4 +1,4 @@
-import { LocalDateTime } from "@/components/local-date-time";
+import { formatMatchDayLabel, LocalDateTime } from "@/components/local-date-time";
 import { ResultForm } from "@/components/result-form";
 import { requireAdmin } from "@/lib/auth/session";
 import { formatResultTrace, formatStageLabel } from "@/lib/presentation";
@@ -25,7 +25,9 @@ export default async function AdminResultsPage() {
         {groupedMatches.map((group) => (
           <section key={group.day} className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-zinc-950">{group.day}</h2>
+              <h2 className="text-lg font-semibold text-zinc-950">
+                {formatMatchDayLabel(`${group.day}T12:00:00`)}
+              </h2>
               <span className="h-px flex-1 bg-black/10" />
             </div>
 

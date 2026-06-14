@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { LocalDateTime } from "@/components/local-date-time";
+import { formatMatchDayLabel, LocalDateTime } from "@/components/local-date-time";
 import { getCurrentParticipant } from "@/lib/auth/session";
 import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
 import {
@@ -176,7 +176,7 @@ export default async function ParticipantPage({
                 selectedDay === day ? "bg-amber-300 text-black" : "bg-white text-zinc-700 ring-1 ring-black/10"
               }`}
             >
-              {day}
+              {formatMatchDayLabel(`${day}T12:00:00`)}
             </Link>
           ))}
         </section>
