@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildMatchReadModel,
   buildStandingsTable,
+  buildGlobalWorstPredictions,
   buildTournamentGoalStats,
-  buildWorstPredictions,
   getAdminResultsGroupedByDay,
-  getMatchReadModelById,
   getMatchDay,
+  getStandingsStats,
   getTournamentGoalStats,
   groupMatchesByDay,
   isMatchLocked,
@@ -232,24 +232,44 @@ describe("read models", () => {
     ]);
   });
 
-  it("finds every worst prediction tied by goal distance", () => {
-    const worstPredictions = buildWorstPredictions({
-      match: {
+  it("finds every global worst prediction tied by goal distance", () => {
+    const worstPredictions = buildGlobalWorstPredictions([
+      {
+        id: "m1",
+        matchNumber: 1,
+        homeTeamName: "Mexico",
+        awayTeamName: "South Africa",
         predictions: [
           {
             participantId: "ramiro",
+            participant: { name: "Ramiro" },
             homeScore: 2,
             awayScore: 1,
             advancesTeamName: null,
           },
           {
             participantId: "pedro",
+            participant: { name: "Pedro" },
             homeScore: 0,
             awayScore: 3,
             advancesTeamName: null,
           },
+        ],
+        result: {
+          homeScore: 2,
+          awayScore: 2,
+          advancesTeamName: null,
+        },
+      },
+      {
+        id: "m2",
+        matchNumber: 2,
+        homeTeamName: "Canada",
+        awayTeamName: "Brazil",
+        predictions: [
           {
             participantId: "ana",
+            participant: { name: "Ana" },
             homeScore: 4,
             awayScore: 3,
             advancesTeamName: null,
@@ -261,18 +281,21 @@ describe("read models", () => {
           advancesTeamName: null,
         },
       },
-      participants: [
-        { id: "ramiro", name: "Ramiro" },
-        { id: "pedro", name: "Pedro" },
-        { id: "ana", name: "Ana" },
-      ],
-      canRevealPredictions: true,
-    });
+    ]);
 
     expect(worstPredictions).toEqual([
       {
         participantId: "pedro",
         participantName: "Pedro",
+        matchId: "m1",
+        matchNumber: 1,
+        homeTeamName: "Mexico",
+        awayTeamName: "South Africa",
+        result: {
+          homeScore: 2,
+          awayScore: 2,
+          advancesTeamName: null,
+        },
         prediction: {
           homeScore: 0,
           awayScore: 3,
@@ -283,6 +306,15 @@ describe("read models", () => {
       {
         participantId: "ana",
         participantName: "Ana",
+        matchId: "m2",
+        matchNumber: 2,
+        homeTeamName: "Canada",
+        awayTeamName: "Brazil",
+        result: {
+          homeScore: 2,
+          awayScore: 2,
+          advancesTeamName: null,
+        },
         prediction: {
           homeScore: 4,
           awayScore: 3,
@@ -293,34 +325,8 @@ describe("read models", () => {
     ]);
   });
 
-  it("does not expose worst predictions before reveal or without a result", () => {
-    const args = {
-      match: {
-        predictions: [
-          {
-            participantId: "ramiro",
-            homeScore: 2,
-            awayScore: 1,
-            advancesTeamName: null,
-          },
-        ],
-        result: {
-          homeScore: 2,
-          awayScore: 2,
-          advancesTeamName: null,
-        },
-      },
-      participants: [{ id: "ramiro", name: "Ramiro" }],
-    };
-
-    expect(buildWorstPredictions({ ...args, canRevealPredictions: false })).toEqual([]);
-    expect(
-      buildWorstPredictions({
-        ...args,
-        match: { ...args.match, result: null },
-        canRevealPredictions: true,
-      }),
-    ).toEqual([]);
+  it("returns no global worst prediction when there are no scored predictions", () => {
+    expect(buildGlobalWorstPredictions([])).toEqual([]);
   });
 
   it("builds tournament goal stats from loaded results", () => {
@@ -354,47 +360,67 @@ describe("read models", () => {
     });
   });
 
-  it("exposes tournament goal stats in the match read model", async () => {
-    const readModel = await getMatchReadModelById(
-      "m1",
-      "ramiro",
-      new Date("2026-06-14T12:00:00.000Z"),
-      {
-        participant: {
-          findMany: async () => [{ id: "ramiro", name: "Ramiro" }],
-        },
-        match: {
-          findUnique: async () => ({
+  it("loads standings stats with goals and global worst predictions", async () => {
+    const stats = await getStandingsStats({
+      matchResult: {
+        findMany: async () => [
+          { homeScore: 2, awayScore: 1 },
+          { homeScore: 3, awayScore: 2 },
+        ],
+      },
+      match: {
+        findMany: async () => [
+          {
             id: "m1",
             matchNumber: 1,
-            stage: "GROUP",
-            groupName: "A",
             homeTeamName: "Mexico",
             awayTeamName: "South Africa",
-            kickoffAt: new Date("2026-06-14T11:00:00.000Z"),
-            venue: null,
-            city: null,
-            predictions: [],
+            predictions: [
+              {
+                participantId: "ramiro",
+                participant: { name: "Ramiro" },
+                homeScore: 0,
+                awayScore: 0,
+                advancesTeamName: null,
+              },
+            ],
             result: {
               homeScore: 2,
               awayScore: 1,
               advancesTeamName: null,
             },
-          }),
-        },
-        matchResult: {
-          findMany: async () => [
-            { homeScore: 2, awayScore: 1 },
-            { homeScore: 3, awayScore: 2 },
-          ],
-        },
-      } as never,
-    );
+          },
+        ],
+      },
+    } as never);
 
-    expect(readModel?.tournamentGoalStats).toEqual({
-      totalGoals: 8,
-      resultedMatches: 2,
-      averageGoalsPerMatch: 4,
+    expect(stats).toEqual({
+      goalStats: {
+        totalGoals: 8,
+        resultedMatches: 2,
+        averageGoalsPerMatch: 4,
+      },
+      worstPredictions: [
+        {
+          participantId: "ramiro",
+          participantName: "Ramiro",
+          matchId: "m1",
+          matchNumber: 1,
+          homeTeamName: "Mexico",
+          awayTeamName: "South Africa",
+          result: {
+            homeScore: 2,
+            awayScore: 1,
+            advancesTeamName: null,
+          },
+          prediction: {
+            homeScore: 0,
+            awayScore: 0,
+            advancesTeamName: null,
+          },
+          distance: 3,
+        },
+      ],
     });
   });
 

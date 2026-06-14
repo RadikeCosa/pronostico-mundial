@@ -65,6 +65,15 @@ export type ParticipantPredictionView = {
 export type WorstPredictionView = {
   participantId: string;
   participantName: string;
+  matchId?: string;
+  matchNumber?: number;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  result?: {
+    homeScore: number;
+    awayScore: number;
+    advancesTeamName: string | null;
+  };
   prediction: {
     homeScore: number;
     awayScore: number;
@@ -87,6 +96,11 @@ export type TournamentGoalStats = {
   averageGoalsPerMatch: number;
 };
 
+export type StandingsStats = {
+  goalStats: TournamentGoalStats;
+  worstPredictions: WorstPredictionView[];
+};
+
 export type MatchReadModel = {
   match: MatchListItem;
   currentPrediction: {
@@ -97,8 +111,6 @@ export type MatchReadModel = {
   isLocked: boolean;
   canRevealPredictions: boolean;
   visiblePredictions: ParticipantPredictionView[];
-  worstPredictions: WorstPredictionView[];
-  tournamentGoalStats: TournamentGoalStats;
   result: MatchResultView | null;
 };
 
@@ -159,6 +171,21 @@ type MatchListWithCurrentPredictionRecord = MatchRecord & {
 type GoalStatsResultRecord = {
   homeScore: number;
   awayScore: number;
+};
+
+type GlobalWorstPredictionMatchRecord = {
+  id: string;
+  matchNumber: number;
+  homeTeamName: string;
+  awayTeamName: string;
+  predictions: Array<
+    PredictionRecord & {
+      participant: {
+        name: string;
+      };
+    }
+  >;
+  result: NonNullable<ResultRecord>;
 };
 
 const matchDayFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -321,40 +348,6 @@ export function buildVisiblePredictions(args: {
   });
 }
 
-export function buildWorstPredictions(args: {
-  match: Pick<MatchWithRelationsRecord, "predictions" | "result">;
-  participants: ParticipantRecord[];
-  canRevealPredictions: boolean;
-}): WorstPredictionView[] {
-  const { match, participants, canRevealPredictions } = args;
-
-  if (!canRevealPredictions || !match.result || match.predictions.length === 0) {
-    return [];
-  }
-
-  const result = match.result;
-  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-  const predictionsWithDistance = match.predictions.map((prediction) => ({
-    participantId: prediction.participantId,
-    participantName: formatParticipantName(
-      participantById.get(prediction.participantId)?.name ?? "Participante",
-    ),
-    prediction: {
-      homeScore: prediction.homeScore,
-      awayScore: prediction.awayScore,
-      advancesTeamName: prediction.advancesTeamName,
-    },
-    distance:
-      Math.abs(prediction.homeScore - result.homeScore) +
-      Math.abs(prediction.awayScore - result.awayScore),
-  }));
-  const worstDistance = Math.max(
-    ...predictionsWithDistance.map((prediction) => prediction.distance),
-  );
-
-  return predictionsWithDistance.filter((prediction) => prediction.distance === worstDistance);
-}
-
 export function buildTournamentGoalStats(
   results: GoalStatsResultRecord[],
 ): TournamentGoalStats {
@@ -384,11 +377,97 @@ export async function getTournamentGoalStats(
   return buildTournamentGoalStats(results);
 }
 
+export function buildGlobalWorstPredictions(
+  matches: GlobalWorstPredictionMatchRecord[],
+): WorstPredictionView[] {
+  const predictionsWithDistance = matches.flatMap((match) =>
+    match.predictions.map((prediction) => ({
+      participantId: prediction.participantId,
+      participantName: formatParticipantName(prediction.participant.name),
+      matchId: match.id,
+      matchNumber: match.matchNumber,
+      homeTeamName: match.homeTeamName,
+      awayTeamName: match.awayTeamName,
+      result: {
+        homeScore: match.result.homeScore,
+        awayScore: match.result.awayScore,
+        advancesTeamName: match.result.advancesTeamName,
+      },
+      prediction: {
+        homeScore: prediction.homeScore,
+        awayScore: prediction.awayScore,
+        advancesTeamName: prediction.advancesTeamName,
+      },
+      distance:
+        Math.abs(prediction.homeScore - match.result.homeScore) +
+        Math.abs(prediction.awayScore - match.result.awayScore),
+    })),
+  );
+
+  if (predictionsWithDistance.length === 0) {
+    return [];
+  }
+
+  const worstDistance = Math.max(
+    ...predictionsWithDistance.map((prediction) => prediction.distance),
+  );
+
+  return predictionsWithDistance.filter((prediction) => prediction.distance === worstDistance);
+}
+
+export async function getStandingsStats(
+  prismaClient: PrismaClient = getPrismaClient(),
+): Promise<StandingsStats> {
+  const [goalStats, matches] = await Promise.all([
+    getTournamentGoalStats(prismaClient),
+    prismaClient.match.findMany({
+      where: {
+        result: {
+          isNot: null,
+        },
+      },
+      orderBy: [{ kickoffAt: "asc" }, { matchNumber: "asc" }],
+      select: {
+        id: true,
+        matchNumber: true,
+        homeTeamName: true,
+        awayTeamName: true,
+        predictions: {
+          select: {
+            participantId: true,
+            homeScore: true,
+            awayScore: true,
+            advancesTeamName: true,
+            participant: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        result: {
+          select: {
+            homeScore: true,
+            awayScore: true,
+            advancesTeamName: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    goalStats,
+    worstPredictions: buildGlobalWorstPredictions(
+      matches.filter((match): match is GlobalWorstPredictionMatchRecord => match.result !== null),
+    ),
+  };
+}
+
 export function buildMatchReadModel(args: {
   match: MatchWithRelationsRecord;
   participants: ParticipantRecord[];
   currentParticipantName: string;
-  tournamentGoalStats?: TournamentGoalStats;
   now: Date;
 }): MatchReadModel {
   const { match, participants, currentParticipantName, now } = args;
@@ -416,12 +495,6 @@ export function buildMatchReadModel(args: {
       participants,
       canRevealPredictions,
     }),
-    worstPredictions: buildWorstPredictions({
-      match,
-      participants,
-      canRevealPredictions,
-    }),
-    tournamentGoalStats: args.tournamentGoalStats ?? buildTournamentGoalStats([]),
     result: normalizeMatchResult(match.result),
   };
 }
@@ -665,7 +738,7 @@ export async function getMatchReadModelById(
   now: Date = new Date(),
   prismaClient: PrismaClient = getPrismaClient(),
 ): Promise<MatchReadModel | null> {
-  const [participants, match, tournamentGoalStats] = await Promise.all([
+  const [participants, match] = await Promise.all([
     prismaClient.participant.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -703,7 +776,6 @@ export async function getMatchReadModelById(
         },
       },
     }),
-    getTournamentGoalStats(prismaClient),
   ]);
 
   if (!match) {
@@ -721,7 +793,6 @@ export async function getMatchReadModelById(
     match,
     participants,
     currentParticipantName: currentParticipant.name,
-    tournamentGoalStats,
     now,
   });
 }

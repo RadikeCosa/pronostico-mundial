@@ -13,13 +13,6 @@ type MatchDetailPageProps = {
   params: Promise<{ participantId: string; matchId: string }>;
 };
 
-function formatGoalAverage(value: number): string {
-  return value.toLocaleString("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 export default async function MatchDetailPage({ params }: MatchDetailPageProps) {
   const { participantId, matchId } = await params;
   const now = new Date();
@@ -122,63 +115,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               <p className="mt-2 text-sm text-zinc-600">Todavía no hay resultado cargado.</p>
             )}
           </section>
-
-          <section className="rounded-[2rem] border border-sky-200 bg-sky-50 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-sky-950">Goles del Mundial</h2>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-white/75 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                  Total
-                </p>
-                <p className="mt-1 text-3xl font-bold text-sky-950">
-                  {matchReadModel.tournamentGoalStats.totalGoals}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-white/75 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                  Promedio
-                </p>
-                <p className="mt-1 text-3xl font-bold text-sky-950">
-                  {formatGoalAverage(matchReadModel.tournamentGoalStats.averageGoalsPerMatch)}
-                </p>
-              </div>
-            </div>
-            <p className="mt-3 text-xs text-sky-800">
-              Calculado sobre {matchReadModel.tournamentGoalStats.resultedMatches} partidos con
-              resultado cargado.
-            </p>
-          </section>
-
-          {matchReadModel.worstPredictions.length > 0 ? (
-            <section className="rounded-[2rem] border border-rose-200 bg-rose-50 p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-rose-950">Peor pronóstico</h2>
-              <p className="mt-1 text-sm text-rose-900/75">
-                El más alejado del resultado real.
-              </p>
-              <div className="mt-4 flex flex-col gap-3">
-                {matchReadModel.worstPredictions.map((worstPrediction) => (
-                  <article
-                    key={worstPrediction.participantId}
-                    className="rounded-2xl border border-rose-200 bg-white/70 p-4"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <h3 className="font-semibold text-rose-950">
-                          {worstPrediction.participantName}
-                        </h3>
-                        <p className="mt-1 text-sm text-rose-900">
-                          {formatPredictionSummary(worstPrediction.prediction)}
-                        </p>
-                      </div>
-                      <span className="rounded-full bg-rose-950 px-3 py-1 text-xs font-semibold text-white">
-                        {worstPrediction.distance} de diferencia
-                      </span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ) : null}
 
           <section className="rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-zinc-950">Pronósticos visibles</h2>

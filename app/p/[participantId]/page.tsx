@@ -8,6 +8,7 @@ import {
   getMatchDay,
   getParticipantById,
   getParticipantMatches,
+  getStandingsStats,
   getStandingsTable,
 } from "@/lib/read-models";
 import { logoutAction } from "@/app/logout/actions";
@@ -42,6 +43,13 @@ function formatAveragePoints(value: number): string {
   });
 }
 
+function formatStatAverage(value: number): string {
+  return value.toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function getInitialSelectedDay(days: string[], today: string): string | undefined {
   if (days.includes(today)) {
     return today;
@@ -68,10 +76,11 @@ export default async function ParticipantPage({
     redirect(`/p/${currentParticipant.id}`);
   }
 
-  const [participant, matches, standings] = await Promise.all([
+  const [participant, matches, standings, standingsStats] = await Promise.all([
     getParticipantById(participantId),
     getParticipantMatches(participantId, now),
     getStandingsTable(now),
+    getStandingsStats(),
   ]);
 
   if (!participant || !participant.active) {
@@ -216,45 +225,123 @@ export default async function ParticipantPage({
       ) : null}
 
       {view === "standings" ? (
-        <section className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-zinc-950">
-              <thead className="bg-zinc-950 text-left text-white">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Jugador</th>
-                  <th className="px-4 py-3 font-semibold">Promedio</th>
-                  <th className="px-4 py-3 font-semibold">Puntos</th>
-                  <th className="px-4 py-3 font-semibold">Partidos puntuados</th>
-                  <th className="px-4 py-3 font-semibold">Resultados exactos</th>
-                  <th className="px-4 py-3 font-semibold">Ganador o empate</th>
-                  <th className="px-4 py-3 font-semibold">Partidos pronosticados</th>
-                  <th className="px-4 py-3 font-semibold">Sin pronóstico</th>
-                </tr>
-              </thead>
-              <tbody>
-                {standings.map((row, index) => (
-                  <tr
-                    key={row.participantId}
-                    className={`border-t border-black/10 ${
-                      index % 2 === 0 ? "bg-white" : "bg-zinc-50"
-                    }`}
-                  >
-                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.participantName}</td>
-                    <td className="px-4 py-4 text-lg font-bold text-zinc-950">
-                      {formatAveragePoints(row.averagePoints)}
-                    </td>
-                    <td className="px-4 py-4 text-lg font-bold text-zinc-950">{row.totalPoints}</td>
-                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.scoredPredictions}</td>
-                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.exactCount}</td>
-                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.outcomeCount}</td>
-                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.predictedMatches}</td>
-                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.missedLockedMatches}</td>
+        <div className="flex flex-col gap-4">
+          <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <article className="rounded-[2rem] border border-sky-200 bg-sky-50 p-5 shadow-sm">
+              <h2 className="text-lg font-semibold text-sky-950">Goles del Mundial</h2>
+              <p className="mt-1 text-sm text-sky-800">
+                Calculado solo con resultados cargados.
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-white/75 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                    Total
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-sky-950">
+                    {standingsStats.goalStats.totalGoals}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/75 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                    Promedio
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-sky-950">
+                    {formatStatAverage(standingsStats.goalStats.averageGoalsPerMatch)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/75 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                    Partidos
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-sky-950">
+                    {standingsStats.goalStats.resultedMatches}
+                  </p>
+                </div>
+              </div>
+            </article>
+
+            <article className="rounded-[2rem] border border-rose-200 bg-rose-50 p-5 shadow-sm">
+              <h2 className="text-lg font-semibold text-rose-950">Peor pronóstico</h2>
+              <p className="mt-1 text-sm text-rose-900/75">
+                Mayor diferencia global entre pronóstico y resultado real.
+              </p>
+              {standingsStats.worstPredictions.length > 0 ? (
+                <div className="mt-4 flex flex-col gap-3">
+                  {standingsStats.worstPredictions.map((worstPrediction) => (
+                    <div
+                      key={`${worstPrediction.participantId}-${worstPrediction.matchId}`}
+                      className="rounded-2xl border border-rose-200 bg-white/75 p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-rose-950">
+                            {worstPrediction.participantName}
+                          </p>
+                          <p className="mt-1 text-sm text-rose-900">
+                            Partido {worstPrediction.matchNumber}:{" "}
+                            {worstPrediction.homeTeamName} vs {worstPrediction.awayTeamName}
+                          </p>
+                          <p className="mt-1 text-sm text-rose-900">
+                            Pronóstico {formatPredictionSummary(worstPrediction.prediction)} ·
+                            resultado {worstPrediction.result?.homeScore} -{" "}
+                            {worstPrediction.result?.awayScore}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-rose-950 px-3 py-1 text-xs font-semibold text-white">
+                          {worstPrediction.distance} goles
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-2xl bg-white/70 p-4 text-sm text-rose-900">
+                  Todavía no hay pronósticos con resultado cargado.
+                </p>
+              )}
+            </article>
+          </section>
+
+          <section className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm text-zinc-950">
+                <thead className="bg-zinc-950 text-left text-white">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Jugador</th>
+                    <th className="px-4 py-3 font-semibold">Promedio</th>
+                    <th className="px-4 py-3 font-semibold">Puntos</th>
+                    <th className="px-4 py-3 font-semibold">Partidos puntuados</th>
+                    <th className="px-4 py-3 font-semibold">Resultados exactos</th>
+                    <th className="px-4 py-3 font-semibold">Ganador o empate</th>
+                    <th className="px-4 py-3 font-semibold">Partidos pronosticados</th>
+                    <th className="px-4 py-3 font-semibold">Sin pronóstico</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {standings.map((row, index) => (
+                    <tr
+                      key={row.participantId}
+                      className={`border-t border-black/10 ${
+                        index % 2 === 0 ? "bg-white" : "bg-zinc-50"
+                      }`}
+                    >
+                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.participantName}</td>
+                      <td className="px-4 py-4 text-lg font-bold text-zinc-950">
+                        {formatAveragePoints(row.averagePoints)}
+                      </td>
+                      <td className="px-4 py-4 text-lg font-bold text-zinc-950">{row.totalPoints}</td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.scoredPredictions}</td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.exactCount}</td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.outcomeCount}</td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.predictedMatches}</td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.missedLockedMatches}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
       ) : (
         <section className="grid gap-4">
           {visibleMatches.map((match) => {
