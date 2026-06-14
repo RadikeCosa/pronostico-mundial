@@ -3,6 +3,8 @@ import { ParticipantCreateForm } from "@/components/participant-create-form";
 import { listActiveParticipants } from "@/lib/read-models";
 import { createParticipantAction } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const participants = await listActiveParticipants();
 

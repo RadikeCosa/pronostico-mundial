@@ -6,6 +6,8 @@ import { upsertPredictionAction } from "../../actions";
 import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
 import { getMatchReadModelById, getParticipantById } from "@/lib/read-models";
 
+export const dynamic = "force-dynamic";
+
 type MatchDetailPageProps = {
   params: Promise<{ participantId: string; matchId: string }>;
 };

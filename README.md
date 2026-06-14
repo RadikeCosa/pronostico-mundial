@@ -1,5 +1,13 @@
 Aplicación familiar de pronósticos para el Mundial 2026 construida con Next.js, Prisma y Postgres.
 
+## Estado actual
+
+El repo ya tiene una v1 funcional de base de datos, scoring, selección de participante, carga de pronósticos, reveal por kickoff, tabla parcial y carga manual de resultados.
+
+Audit actual:
+
+- [Estado del proyecto 2026-06-14](/home/ramiro/dev/pronosticos-mundial/docs/audits/audit-estado-proyecto-pronosticos-mundial-2026-06-14.md)
+
 ## Variables de entorno
 
 Copiá `.env.example` a `.env.local` para desarrollo local.

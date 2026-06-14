@@ -9,6 +9,8 @@ import {
   getStandingsTable,
 } from "@/lib/read-models";
 
+export const dynamic = "force-dynamic";
+
 type ParticipantPageProps = {
   params: Promise<{ participantId: string }>;
   searchParams: Promise<{

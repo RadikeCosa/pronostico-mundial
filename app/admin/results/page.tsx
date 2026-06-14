@@ -4,6 +4,8 @@ import { formatStageLabel } from "@/lib/presentation";
 import { getAdminResultsGroupedByDay } from "@/lib/read-models";
 import { upsertMatchResultAction } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminResultsPage() {
   const groupedMatches = await getAdminResultsGroupedByDay();
 
