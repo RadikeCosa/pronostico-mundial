@@ -1,52 +1,118 @@
-Aplicacion familiar de pronosticos para el Mundial 2026 construida con Next.js, Prisma y Postgres.
+Aplicación familiar de pronósticos para el Mundial 2026 construida con Next.js, Prisma y Postgres.
+
+## Variables de entorno
+
+Copiá `.env.example` a `.env.local` para desarrollo local.
+
+- `DATABASE_URL`
+  Conexión principal de la app. En Neon o Vercel Postgres puede ser la URL pooled/runtime.
+- `DIRECT_DATABASE_URL`
+  Opcional pero recomendada para Prisma Migrate. Usá la URL directa/no pooled si el proveedor la expone.
+
+No subas secretos reales al repo. `.env*` ya está ignorado.
+
+## Setup local
+
+1. Instalar dependencias:
+   `npm install`
+2. Crear `.env.local` desde `.env.example`.
+3. Validar Prisma:
+   `npm run prisma:validate`
+4. Aplicar migraciones:
+   `npm run db:migrate:deploy`
+   Para desarrollo local también podés usar `npm run db:migrate:dev`.
+5. Cargar datos iniciales:
+   `npm run db:seed`
+6. Levantar la app:
+   `npm run dev`
+
+## Setup DB
+
+El proyecto usa Postgres. No depende de SQLite.
+
+- Schema Prisma: `prisma/schema.prisma`
+- Config Prisma 7: `prisma.config.ts`
+- Migración inicial versionada: `prisma/migrations/20260614_initial_schema/migration.sql`
+- Fixture base: `prisma/seed-data/fixture.json`
+
+Comandos útiles:
+
+- `npm run prisma:generate`
+- `npm run db:migrate:dev`
+- `npm run db:migrate:deploy`
+- `npm run db:seed`
+
+## Seed
+
+El seed:
+
+- crea participantes Ramiro y Pedro
+- crea equipos desde `fixture.json`
+- crea los 104 partidos
+- crea los pronósticos históricos de los partidos 1 a 7
+
+Es idempotente a nivel aplicación para participantes, equipos, partidos y esos pronósticos.
+
+Local:
+
+- `npm run db:migrate:deploy`
+- `npm run db:seed`
+
+Producción:
+
+- correr primero migraciones
+- correr seed solo si querés inicializar datos base en una base vacía
+
+El seed usa `DATABASE_URL` y cae en `DIRECT_DATABASE_URL` si no existe.
+
+## Deploy
+
+Checklist para Vercel + Neon:
+
+1. Crear base Postgres en Neon o Vercel Marketplace.
+2. Configurar en Vercel:
+   - `DATABASE_URL`
+   - `DIRECT_DATABASE_URL` recomendable para migraciones
+3. Build command:
+   `npm run build`
+4. Install command:
+   `npm install`
+5. Antes o inmediatamente después del primer deploy, aplicar migraciones:
+   `npm run db:migrate:deploy`
+6. Si la base está vacía y querés datos iniciales:
+   `npm run db:seed`
+
+Nota:
+
+- En este repo el build genera Prisma Client antes de compilar Next.
+- `postinstall` también ejecuta `prisma generate`, útil para entornos CI/Vercel.
+
+## Operación manual
+
+Resultados manuales:
+
+- ruta: `/admin/results`
+- permite cargar o editar `homeScore`, `awayScore` y `advancesTeamName` en cruces
+- no modifica pronósticos
+- al guardar, la tabla de puntos se recalcula desde `MatchResult + Prediction`
+
+Participantes:
+
+- alta simple desde `/`
+- nuevos participantes quedan activos por defecto
+- no hay borrado ni auth real en v1
+
+La unicidad del nombre se valida de forma case-insensitive en la app. La restricción única dura de base sigue siendo `name` tal como está hoy en el schema.
 
 ## Scripts
 
-- `npm run dev`: inicia la app.
-- `npm run lint`: corre ESLint.
-- `npm run test`: corre los tests unitarios de dominio con Vitest.
-- `npm run prisma:validate`: valida el schema Prisma.
-- `npm run prisma:generate`: genera Prisma Client.
-- `npm run db:push`: aplica el schema a la base configurada.
-- `npm run db:seed`: carga participantes, equipos, partidos y pronosticos historicos.
-
-## Scoring
-
-El motor de scoring vive en `lib/scoring.ts` y es logica pura.
-
-- Fase de grupos:
-  exacto = 3, signo correcto sin exacto = 1.
-- Knockout:
-  exacto = 3, y si el partido termina empatado el clasificado correcto suma 1 adicional.
-- Regla actual:
-  si pronostica empate sin acertar el resultado exacto, pero acierta quien clasifica, suma 1 punto.
-
-## Read models
-
-Las funciones server-side viven en `lib/read-models.ts`.
-
-- participantes activos
-- partidos agrupados por dia
-- partidos filtrados por grupo
-- detalle de partido con bloqueo, reveal y predicciones visibles
-- tabla de posiciones parcial recalculada desde resultados y pronosticos
-
-## UI inicial
-
-- `/`: seleccion de participante
-- `/`: formulario simple para alta de participantes
-- `/p/[participantId]`: partidos y tabla de puntos
-- `/p/[participantId]/matches/[matchId]`: detalle y carga de pronostico
-- `/admin/results`: carga manual de resultados
-
-La unicidad del nombre se valida de forma case-insensitive en la app. La restriccion unica dura de base sigue siendo `name` tal como esta en el schema actual.
-
-## Base de datos
-
-Defini `DATABASE_URL` antes de correr comandos de Prisma que hablen con la base.
-
-El fixture base esta en `prisma/seed-data/fixture.json`.
-
-## Desarrollo
-
-Abrir [http://localhost:3000](http://localhost:3000) despues de `npm run dev`.
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+- `npm run test`
+- `npm run prisma:validate`
+- `npm run prisma:generate`
+- `npm run db:migrate:dev`
+- `npm run db:migrate:deploy`
+- `npm run db:push`
+- `npm run db:seed`

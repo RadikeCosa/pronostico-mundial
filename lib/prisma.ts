@@ -8,9 +8,12 @@ export function getPrismaClient(): PrismaClient {
     return prismaClient;
   }
 
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString =
+    process.env.DATABASE_URL ?? process.env.DIRECT_DATABASE_URL;
   if (!connectionString) {
-    throw new Error("DATABASE_URL is required to create a Prisma client.");
+    throw new Error(
+      "DATABASE_URL or DIRECT_DATABASE_URL is required to create a Prisma client.",
+    );
   }
 
   const adapter = new PrismaPg({ connectionString });
