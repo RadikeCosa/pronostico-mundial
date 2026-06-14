@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildMatchReadModel,
   buildStandingsTable,
+  buildTournamentGoalStats,
+  buildWorstPredictions,
   getAdminResultsGroupedByDay,
+  getMatchReadModelById,
   getMatchDay,
   groupMatchesByDay,
   isMatchLocked,
@@ -226,6 +229,155 @@ describe("read models", () => {
         score: null,
       },
     ]);
+  });
+
+  it("finds every worst prediction tied by goal distance", () => {
+    const worstPredictions = buildWorstPredictions({
+      match: {
+        predictions: [
+          {
+            participantId: "ramiro",
+            homeScore: 2,
+            awayScore: 1,
+            advancesTeamName: null,
+          },
+          {
+            participantId: "pedro",
+            homeScore: 0,
+            awayScore: 3,
+            advancesTeamName: null,
+          },
+          {
+            participantId: "ana",
+            homeScore: 4,
+            awayScore: 3,
+            advancesTeamName: null,
+          },
+        ],
+        result: {
+          homeScore: 2,
+          awayScore: 2,
+          advancesTeamName: null,
+        },
+      },
+      participants: [
+        { id: "ramiro", name: "Ramiro" },
+        { id: "pedro", name: "Pedro" },
+        { id: "ana", name: "Ana" },
+      ],
+      canRevealPredictions: true,
+    });
+
+    expect(worstPredictions).toEqual([
+      {
+        participantId: "pedro",
+        participantName: "Pedro",
+        prediction: {
+          homeScore: 0,
+          awayScore: 3,
+          advancesTeamName: null,
+        },
+        distance: 3,
+      },
+      {
+        participantId: "ana",
+        participantName: "Ana",
+        prediction: {
+          homeScore: 4,
+          awayScore: 3,
+          advancesTeamName: null,
+        },
+        distance: 3,
+      },
+    ]);
+  });
+
+  it("does not expose worst predictions before reveal or without a result", () => {
+    const args = {
+      match: {
+        predictions: [
+          {
+            participantId: "ramiro",
+            homeScore: 2,
+            awayScore: 1,
+            advancesTeamName: null,
+          },
+        ],
+        result: {
+          homeScore: 2,
+          awayScore: 2,
+          advancesTeamName: null,
+        },
+      },
+      participants: [{ id: "ramiro", name: "Ramiro" }],
+    };
+
+    expect(buildWorstPredictions({ ...args, canRevealPredictions: false })).toEqual([]);
+    expect(
+      buildWorstPredictions({
+        ...args,
+        match: { ...args.match, result: null },
+        canRevealPredictions: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it("builds tournament goal stats from loaded results", () => {
+    expect(
+      buildTournamentGoalStats([
+        { homeScore: 2, awayScore: 1 },
+        { homeScore: 0, awayScore: 0 },
+        { homeScore: 3, awayScore: 2 },
+      ]),
+    ).toEqual({
+      totalGoals: 8,
+      resultedMatches: 3,
+      averageGoalsPerMatch: 8 / 3,
+    });
+  });
+
+  it("exposes tournament goal stats in the match read model", async () => {
+    const readModel = await getMatchReadModelById(
+      "m1",
+      "ramiro",
+      new Date("2026-06-14T12:00:00.000Z"),
+      {
+        participant: {
+          findMany: async () => [{ id: "ramiro", name: "Ramiro" }],
+        },
+        match: {
+          findUnique: async () => ({
+            id: "m1",
+            matchNumber: 1,
+            stage: "GROUP",
+            groupName: "A",
+            homeTeamName: "Mexico",
+            awayTeamName: "South Africa",
+            kickoffAt: new Date("2026-06-14T11:00:00.000Z"),
+            venue: null,
+            city: null,
+            predictions: [],
+            result: {
+              homeScore: 2,
+              awayScore: 1,
+              advancesTeamName: null,
+            },
+          }),
+        },
+        matchResult: {
+          findMany: async () => [
+            { homeScore: 2, awayScore: 1 },
+            { homeScore: 3, awayScore: 2 },
+          ],
+        },
+      } as never,
+    );
+
+    expect(readModel?.tournamentGoalStats).toEqual({
+      totalGoals: 8,
+      resultedMatches: 2,
+      averageGoalsPerMatch: 4,
+    });
   });
 
   it("builds standings with partial results and missed locked matches", () => {
