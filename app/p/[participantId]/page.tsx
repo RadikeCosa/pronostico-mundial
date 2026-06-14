@@ -201,26 +201,31 @@ export default async function ParticipantPage({
       {view === "standings" ? (
         <section className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-600">
+            <table className="min-w-full text-sm text-zinc-950">
+              <thead className="bg-zinc-950 text-left text-white">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Participante</th>
-                  <th className="px-4 py-3 font-medium">Puntos</th>
-                  <th className="px-4 py-3 font-medium">Exactos</th>
-                  <th className="px-4 py-3 font-medium">Signos</th>
-                  <th className="px-4 py-3 font-medium">Pronosticados</th>
-                  <th className="px-4 py-3 font-medium">Sin pronóstico bloqueados</th>
+                  <th className="px-4 py-3 font-semibold">Jugador</th>
+                  <th className="px-4 py-3 font-semibold">Puntos</th>
+                  <th className="px-4 py-3 font-semibold">Resultados exactos</th>
+                  <th className="px-4 py-3 font-semibold">Ganador o empate</th>
+                  <th className="px-4 py-3 font-semibold">Partidos pronosticados</th>
+                  <th className="px-4 py-3 font-semibold">Sin pronóstico</th>
                 </tr>
               </thead>
               <tbody>
-                {standings.map((row) => (
-                  <tr key={row.participantId} className="border-t border-black/5">
-                    <td className="px-4 py-3 font-medium text-zinc-900">{row.participantName}</td>
-                    <td className="px-4 py-3">{row.totalPoints}</td>
-                    <td className="px-4 py-3">{row.exactCount}</td>
-                    <td className="px-4 py-3">{row.outcomeCount}</td>
-                    <td className="px-4 py-3">{row.predictedMatches}</td>
-                    <td className="px-4 py-3">{row.missedLockedMatches}</td>
+                {standings.map((row, index) => (
+                  <tr
+                    key={row.participantId}
+                    className={`border-t border-black/10 ${
+                      index % 2 === 0 ? "bg-white" : "bg-zinc-50"
+                    }`}
+                  >
+                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.participantName}</td>
+                    <td className="px-4 py-4 text-lg font-bold text-zinc-950">{row.totalPoints}</td>
+                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.exactCount}</td>
+                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.outcomeCount}</td>
+                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.predictedMatches}</td>
+                    <td className="px-4 py-4 font-semibold text-zinc-950">{row.missedLockedMatches}</td>
                   </tr>
                 ))}
               </tbody>
