@@ -84,31 +84,41 @@ export default async function ParticipantPage({
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
       <header className="flex flex-col gap-2 rounded-[2rem] bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
         <p className="text-sm uppercase tracking-[0.2em] text-white/70">Pronósticos Mundial 2026</p>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold">{participant.name}</h1>
             <p className="mt-1 text-sm text-white/70">Elegí un partido para cargar o revisar tu pronóstico.</p>
           </div>
-          <Link
-            href={`/p/${participantId}`}
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
-          >
-            Mi pantalla
-          </Link>
-          <Link
-            href="/account/password"
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
-          >
-            Contraseña
-          </Link>
-          <form action={logoutAction}>
-            <button
-              type="submit"
+          <div className="flex flex-wrap gap-2">
+            {currentParticipant.isAdmin ? (
+              <Link
+                href="/admin/results"
+                className="rounded-full bg-amber-300 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200"
+              >
+                Cargar resultados
+              </Link>
+            ) : null}
+            <Link
+              href={`/p/${participantId}`}
               className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
             >
-              Salir
-            </button>
-          </form>
+              Mi pantalla
+            </Link>
+            <Link
+              href="/account/password"
+              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+            >
+              Contraseña
+            </Link>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+              >
+                Salir
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
@@ -138,6 +148,23 @@ export default async function ParticipantPage({
           Tabla de puntos
         </Link>
       </nav>
+
+      {currentParticipant.isAdmin ? (
+        <section className="flex flex-col gap-3 rounded-[2rem] border border-amber-200 bg-amber-50 p-5 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold">Resultados de partidos jugados</h2>
+            <p className="mt-1 text-sm text-amber-900/80">
+              Entrá al panel para cargar o corregir marcadores. Los partidos futuros se habilitan desde el inicio.
+            </p>
+          </div>
+          <Link
+            href="/admin/results"
+            className="rounded-full bg-black px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-zinc-800"
+          >
+            Ir a cargar resultados
+          </Link>
+        </section>
+      ) : null}
 
       {view === "day" ? (
         <section className="flex flex-wrap gap-2">
