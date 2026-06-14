@@ -64,5 +64,5 @@ export function getMatchStatusLabel(match: Pick<MatchListItem, "isLocked"> & { h
     return "Con resultado";
   }
 
-  return match.isLocked ? "Bloqueado" : "Abierto";
+  return match.isLocked ? "Bloqueado" : "Disponible";
 }

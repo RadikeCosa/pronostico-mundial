@@ -4,7 +4,10 @@ import { useActionState } from "react";
 import type { LoginFormState } from "@/app/login/actions";
 
 type LoginFormProps = {
-  action: (state: LoginFormState, formData: FormData) => Promise<LoginFormState>;
+  action: (
+    state: LoginFormState,
+    formData: FormData,
+  ) => Promise<LoginFormState>;
 };
 
 const initialState: LoginFormState = {
@@ -24,6 +27,7 @@ export function LoginForm({ action }: LoginFormProps) {
           type="text"
           autoComplete="username"
           required
+          placeholder="Ej: Ramiro"
           className="rounded-2xl border border-black/10 px-4 py-3 text-lg text-zinc-950 outline-none focus:border-black"
         />
       </label>

@@ -15,13 +15,16 @@ export default async function AdminResultsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
-      <header className="rounded-[2rem] bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
+      <header className="rounded-4xl bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
         <p className="text-sm uppercase tracking-[0.2em] text-white/70">
           Administración simple
         </p>
-        <h1 className="mt-2 text-3xl font-semibold">Carga manual de resultados</h1>
+        <h1 className="mt-2 text-3xl font-semibold">
+          Carga manual de resultados
+        </h1>
         <p className="mt-2 max-w-2xl text-sm text-white/75">
-          Solo administradores pueden cargar resultados. Los resultados impactan directo en la tabla de puntos.
+          Solo administradores pueden cargar resultados. Los resultados impactan
+          directo en la tabla de puntos.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
@@ -58,7 +61,7 @@ export default async function AdminResultsPage() {
                 return (
                   <article
                     key={match.id}
-                    className="rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm"
+                    className="rounded-4xl border border-black/10 bg-white p-5 shadow-sm"
                   >
                     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
                       <div className="space-y-2">
@@ -79,18 +82,22 @@ export default async function AdminResultsPage() {
                         </h3>
 
                         <p className="text-sm text-zinc-600">
-                          <LocalDateTime value={match.kickoffAt.toISOString()} />
+                          <LocalDateTime
+                            value={match.kickoffAt.toISOString()}
+                          />
                         </p>
 
                         <p className="text-sm text-zinc-700">
-                          <span className="font-medium text-zinc-950">Resultado actual:</span>{" "}
+                          <span className="font-medium text-zinc-950">
+                            Resultado actual:
+                          </span>{" "}
                           {match.result
                             ? `${match.result.homeScore} - ${match.result.awayScore}${
                                 match.result.advancesTeamName
                                   ? ` · clasifica ${match.result.advancesTeamName}`
                                   : ""
                               }`
-                            : "Sin cargar"}
+                            : "Sin resultado"}
                         </p>
                         {resultTrace ? (
                           <p className="text-xs text-zinc-500">{resultTrace}</p>
@@ -103,15 +110,17 @@ export default async function AdminResultsPage() {
                           defaultValues={{
                             homeScore: match.result?.homeScore ?? null,
                             awayScore: match.result?.awayScore ?? null,
-                            advancesTeamName: match.result?.advancesTeamName ?? null,
+                            advancesTeamName:
+                              match.result?.advancesTeamName ?? null,
                           }}
                           homeTeamName={match.homeTeamName}
                           awayTeamName={match.awayTeamName}
                           showAdvancingTeamField={showAdvancingTeamField}
                         />
                       ) : (
-                        <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
-                          Disponible desde el inicio del partido.
+                        <section className="rounded-4xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+                          Este partido todavía no empezó. El formulario se
+                          habilita al inicio.
                         </section>
                       )}
                     </div>

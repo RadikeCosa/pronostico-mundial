@@ -75,7 +75,7 @@ export function ResultForm({
 
       {showAdvancingTeamField ? (
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
-          Clasifica
+          Equipo que clasifica
           <input
             name="advancesTeamName"
             type="text"
@@ -98,7 +98,7 @@ export function ResultForm({
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
+        className="min-h-[44px] rounded-full bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400"
       >
         {isPending ? "Guardando..." : "Guardar resultado"}
       </button>

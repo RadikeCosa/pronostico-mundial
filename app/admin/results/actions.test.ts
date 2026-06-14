@@ -41,6 +41,19 @@ describe("upsertMatchResultAction auth", () => {
     expect(mocks.upsertAdminMatchResult).not.toHaveBeenCalled();
   });
 
+  it("does not execute without a session", async () => {
+    mocks.requireAdmin.mockRejectedValue(new Error("NEXT_REDIRECT"));
+
+    await expect(
+      upsertMatchResultAction(
+        "match-1",
+        { status: "idle", message: null },
+        createResultFormData(),
+      ),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.upsertAdminMatchResult).not.toHaveBeenCalled();
+  });
+
   it("executes for an admin participant", async () => {
     mocks.requireAdmin.mockResolvedValue({
       id: "ramiro",

@@ -45,7 +45,10 @@ export function PredictionForm({
   }, [router, state.status]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 rounded-3xl border border-black/10 bg-white p-5 shadow-sm">
+    <form
+      action={formAction}
+      className="flex flex-col gap-4 rounded-3xl border border-black/10 bg-white p-5 shadow-sm"
+    >
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
           {homeTeamName}
@@ -77,13 +80,16 @@ export function PredictionForm({
 
       {showAdvancingTeamField ? (
         <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-          Quién clasifica si termina empatado
+          ¿Quién clasifica?
           <input
             name="advancesTeamName"
             type="text"
             defaultValue={defaultValues.advancesTeamName ?? ""}
             className="rounded-2xl border border-black/10 px-3 py-2 text-base text-zinc-900 outline-none focus:border-black"
           />
+          <span className="text-xs font-normal text-zinc-500">
+            Solo si hay empate en goles.
+          </span>
         </label>
       ) : null}
 

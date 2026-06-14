@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { LocalDateTime } from "@/components/local-date-time";
 import { getCurrentParticipant } from "@/lib/auth/session";
 import { formatMatchDayLabel } from "@/lib/date-format";
-import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
+import {
+  formatPredictionSummary,
+  formatStageLabel,
+  getMatchStatusLabel,
+} from "@/lib/presentation";
 import {
   getMatchDay,
   getParticipantById,
@@ -26,11 +30,15 @@ type ParticipantPageProps = {
 
 function buildHref(participantId: string, view: string, value?: string) {
   if (view === "day") {
-    return value ? `/p/${participantId}?view=day&day=${encodeURIComponent(value)}` : `/p/${participantId}?view=day`;
+    return value
+      ? `/p/${participantId}?view=day&day=${encodeURIComponent(value)}`
+      : `/p/${participantId}?view=day`;
   }
 
   if (view === "group") {
-    return value ? `/p/${participantId}?view=group&group=${encodeURIComponent(value)}` : `/p/${participantId}?view=group`;
+    return value
+      ? `/p/${participantId}?view=group&group=${encodeURIComponent(value)}`
+      : `/p/${participantId}?view=group`;
   }
 
   return `/p/${participantId}?view=standings`;
@@ -50,7 +58,10 @@ function formatStatAverage(value: number): string {
   });
 }
 
-function getInitialSelectedDay(days: string[], today: string): string | undefined {
+function getInitialSelectedDay(
+  days: string[],
+  today: string,
+): string | undefined {
   if (days.includes(today)) {
     return today;
   }
@@ -87,9 +98,17 @@ export default async function ParticipantPage({
     notFound();
   }
 
-  const days = [...new Set(matches.map((match) => getMatchDay(match.kickoffAt)))];
+  const days = [
+    ...new Set(matches.map((match) => getMatchDay(match.kickoffAt))),
+  ];
   const today = getMatchDay(now);
-  const groups = [...new Set(matches.map((match) => match.groupName).filter((groupName): groupName is string => Boolean(groupName)))];
+  const groups = [
+    ...new Set(
+      matches
+        .map((match) => match.groupName)
+        .filter((groupName): groupName is string => Boolean(groupName)),
+    ),
+  ];
   const selectedDay =
     resolvedSearchParams.day && days.includes(resolvedSearchParams.day)
       ? resolvedSearchParams.day
@@ -103,23 +122,29 @@ export default async function ParticipantPage({
     view === "group"
       ? matches.filter((match) => match.groupName === selectedGroup)
       : view === "day"
-        ? matches.filter((match) => getMatchDay(match.kickoffAt) === selectedDay)
+        ? matches.filter(
+            (match) => getMatchDay(match.kickoffAt) === selectedDay,
+          )
         : matches;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
-      <header className="flex flex-col gap-2 rounded-[2rem] bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
-        <p className="text-sm uppercase tracking-[0.2em] text-white/70">Pronósticos Mundial 2026</p>
+      <header className="flex flex-col gap-2 rounded-4xl bg-[linear-gradient(135deg,#111827,#1f2937)] px-6 py-7 text-white shadow-lg">
+        <p className="text-sm uppercase tracking-[0.2em] text-white/70">
+          Pronósticos Mundial 2026
+        </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold">{participant.name}</h1>
-            <p className="mt-1 text-sm text-white/70">Elegí un partido para cargar o revisar tu pronóstico.</p>
+            <p className="mt-1 text-sm text-white/70">
+              Elegí un partido para cargar o revisar tu pronóstico.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {currentParticipant.isAdmin ? (
               <Link
                 href="/admin/results"
-                className="rounded-full bg-amber-300 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200"
+                className="min-h-11 rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-200"
               >
                 Cargar resultados
               </Link>
@@ -127,27 +152,21 @@ export default async function ParticipantPage({
             {currentParticipant.isAdmin ? (
               <Link
                 href="/admin/participants"
-                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
+                className="min-h-11 rounded-full bg-white px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-100"
               >
                 Usuarios
               </Link>
             ) : null}
             <Link
-              href={`/p/${participantId}`}
-              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
-            >
-              Mi pantalla
-            </Link>
-            <Link
               href="/account/password"
-              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+              className="min-h-11 rounded-full border border-white/20 px-4 py-3 text-sm font-medium text-white/90 transition hover:bg-white/10"
             >
-              Contraseña
+              Cambiar contraseña
             </Link>
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
+                className="min-h-11 rounded-full border border-white/20 px-4 py-3 text-sm font-medium text-white/90 transition hover:bg-white/10"
               >
                 Salir
               </button>
@@ -159,7 +178,7 @@ export default async function ParticipantPage({
       <nav className="flex flex-wrap gap-2">
         <Link
           href={buildHref(participantId, "day")}
-          className={`rounded-full px-4 py-2 text-sm font-medium ${
+          className={`min-h-11 rounded-full px-4 py-3 text-sm font-medium ${
             view === "day" ? "bg-black text-white" : "bg-zinc-100 text-zinc-700"
           }`}
         >
@@ -167,16 +186,20 @@ export default async function ParticipantPage({
         </Link>
         <Link
           href={buildHref(participantId, "group")}
-          className={`rounded-full px-4 py-2 text-sm font-medium ${
-            view === "group" ? "bg-black text-white" : "bg-zinc-100 text-zinc-700"
+          className={`min-h-11 rounded-full px-4 py-3 text-sm font-medium ${
+            view === "group"
+              ? "bg-black text-white"
+              : "bg-zinc-100 text-zinc-700"
           }`}
         >
           Por grupo
         </Link>
         <Link
           href={buildHref(participantId, "standings")}
-          className={`rounded-full px-4 py-2 text-sm font-medium ${
-            view === "standings" ? "bg-black text-white" : "bg-zinc-100 text-zinc-700"
+          className={`min-h-11 rounded-full px-4 py-3 text-sm font-medium ${
+            view === "standings"
+              ? "bg-black text-white"
+              : "bg-zinc-100 text-zinc-700"
           }`}
         >
           Tabla de puntos
@@ -215,7 +238,9 @@ export default async function ParticipantPage({
               key={group}
               href={buildHref(participantId, "group", group)}
               className={`rounded-full px-4 py-2 text-sm ${
-                selectedGroup === group ? "bg-amber-300 text-black" : "bg-white text-zinc-700 ring-1 ring-black/10"
+                selectedGroup === group
+                  ? "bg-amber-300 text-black"
+                  : "bg-white text-zinc-700 ring-1 ring-black/10"
               }`}
             >
               Grupo {group}
@@ -227,8 +252,10 @@ export default async function ParticipantPage({
       {view === "standings" ? (
         <div className="flex flex-col gap-4">
           <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <article className="rounded-[2rem] border border-sky-200 bg-sky-50 p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-sky-950">Goles del Mundial</h2>
+            <article className="rounded-4xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
+              <h2 className="text-lg font-semibold text-sky-950">
+                Goles del Mundial
+              </h2>
               <p className="mt-1 text-sm text-sky-800">
                 Calculado solo con resultados cargados.
               </p>
@@ -246,7 +273,9 @@ export default async function ParticipantPage({
                     Promedio
                   </p>
                   <p className="mt-1 text-2xl font-bold text-sky-950">
-                    {formatStatAverage(standingsStats.goalStats.averageGoalsPerMatch)}
+                    {formatStatAverage(
+                      standingsStats.goalStats.averageGoalsPerMatch,
+                    )}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white/75 p-4">
@@ -260,8 +289,10 @@ export default async function ParticipantPage({
               </div>
             </article>
 
-            <article className="rounded-[2rem] border border-rose-200 bg-rose-50 p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-rose-950">Peor pronóstico</h2>
+            <article className="rounded-4xl border border-rose-200 bg-rose-50 p-5 shadow-sm">
+              <h2 className="text-lg font-semibold text-rose-950">
+                Peor pronóstico
+              </h2>
               <p className="mt-1 text-sm text-rose-900/75">
                 Mayor diferencia global entre pronóstico y resultado real.
               </p>
@@ -279,11 +310,15 @@ export default async function ParticipantPage({
                           </p>
                           <p className="mt-1 text-sm text-rose-900">
                             Partido {worstPrediction.matchNumber}:{" "}
-                            {worstPrediction.homeTeamName} vs {worstPrediction.awayTeamName}
+                            {worstPrediction.homeTeamName} vs{" "}
+                            {worstPrediction.awayTeamName}
                           </p>
                           <p className="mt-1 text-sm text-rose-900">
-                            Pronóstico {formatPredictionSummary(worstPrediction.prediction)} ·
-                            resultado {worstPrediction.result?.homeScore} -{" "}
+                            Pronóstico{" "}
+                            {formatPredictionSummary(
+                              worstPrediction.prediction,
+                            )}{" "}
+                            · resultado {worstPrediction.result?.homeScore} -{" "}
                             {worstPrediction.result?.awayScore}
                           </p>
                         </div>
@@ -302,18 +337,24 @@ export default async function ParticipantPage({
             </article>
           </section>
 
-          <section className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-sm">
+          <section className="overflow-hidden rounded-4xl border border-black/10 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-zinc-950">
                 <thead className="bg-zinc-950 text-left text-white">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Jugador</th>
+                    <th className="px-4 py-3 font-semibold">Participante</th>
                     <th className="px-4 py-3 font-semibold">Promedio</th>
                     <th className="px-4 py-3 font-semibold">Puntos</th>
-                    <th className="px-4 py-3 font-semibold">Partidos puntuados</th>
-                    <th className="px-4 py-3 font-semibold">Resultados exactos</th>
-                    <th className="px-4 py-3 font-semibold">Ganador o empate</th>
-                    <th className="px-4 py-3 font-semibold">Partidos pronosticados</th>
+                    <th className="px-4 py-3 font-semibold">
+                      Partidos puntuados
+                    </th>
+                    <th className="px-4 py-3 font-semibold">
+                      Pronósticos exactos
+                    </th>
+                    <th className="px-4 py-3 font-semibold">Signo acertado</th>
+                    <th className="px-4 py-3 font-semibold">
+                      Partidos pronosticados
+                    </th>
                     <th className="px-4 py-3 font-semibold">Sin pronóstico</th>
                   </tr>
                 </thead>
@@ -325,16 +366,30 @@ export default async function ParticipantPage({
                         index % 2 === 0 ? "bg-white" : "bg-zinc-50"
                       }`}
                     >
-                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.participantName}</td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">
+                        {row.participantName}
+                      </td>
                       <td className="px-4 py-4 text-lg font-bold text-zinc-950">
                         {formatAveragePoints(row.averagePoints)}
                       </td>
-                      <td className="px-4 py-4 text-lg font-bold text-zinc-950">{row.totalPoints}</td>
-                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.scoredPredictions}</td>
-                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.exactCount}</td>
-                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.outcomeCount}</td>
-                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.predictedMatches}</td>
-                      <td className="px-4 py-4 font-semibold text-zinc-950">{row.missedLockedMatches}</td>
+                      <td className="px-4 py-4 text-lg font-bold text-zinc-950">
+                        {row.totalPoints}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">
+                        {row.scoredPredictions}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">
+                        {row.exactCount}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">
+                        {row.outcomeCount}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">
+                        {row.predictedMatches}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-zinc-950">
+                        {row.missedLockedMatches}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -346,62 +401,89 @@ export default async function ParticipantPage({
         <section className="grid gap-4">
           {visibleMatches.map((match) => {
             const isPastMatchDay = getMatchDay(match.kickoffAt) < today;
+            const statusLabel = getMatchStatusLabel(match);
+            const statusBadgeClass = match.hasResult
+              ? "bg-sky-100 text-sky-800"
+              : match.isLocked
+                ? "bg-zinc-100 text-zinc-600"
+                : match.currentPrediction
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-amber-100 text-amber-800";
+            const buttonLabel = match.hasResult
+              ? "Ver resultado"
+              : match.isLocked
+                ? "Ver pronósticos"
+                : match.currentPrediction
+                  ? "Editar pronóstico"
+                  : "Cargar pronóstico";
 
             return (
               <article
                 key={match.id}
-                className={`rounded-[2rem] border p-5 shadow-sm transition ${
+                className={`rounded-4xl border p-5 shadow-sm transition ${
                   isPastMatchDay
-                    ? "border-black/5 bg-zinc-50 opacity-75 grayscale-[20%]"
+                    ? "border-black/5 bg-zinc-50 opacity-75 grayscale-20"
                     : "border-black/10 bg-white"
                 }`}
               >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
-                    <span>Partido {match.matchNumber}</span>
-                    <span>·</span>
-                    <span>{formatStageLabel(match.stage)}</span>
-                    {match.groupName ? (
-                      <>
-                        <span>·</span>
-                        <span>Grupo {match.groupName}</span>
-                      </>
-                    ) : null}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                      <span>Partido {match.matchNumber}</span>
+                      <span>·</span>
+                      <span>{formatStageLabel(match.stage)}</span>
+                      {match.groupName ? (
+                        <>
+                          <span>·</span>
+                          <span>Grupo {match.groupName}</span>
+                        </>
+                      ) : null}
+                    </div>
+                    <h2 className="text-xl font-semibold text-zinc-950">
+                      {match.homeTeamName} vs {match.awayTeamName}
+                    </h2>
+                    <p className="text-sm text-zinc-600">
+                      <LocalDateTime value={match.kickoffAt.toISOString()} />
+                    </p>
                   </div>
-                  <h2 className="text-xl font-semibold text-zinc-950">
-                    {match.homeTeamName} vs {match.awayTeamName}
-                  </h2>
-                  <p className="text-sm text-zinc-600">
-                    <LocalDateTime value={match.kickoffAt.toISOString()} />
-                  </p>
+
+                  <div className="flex flex-col items-start gap-3 sm:items-end">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass}`}
+                    >
+                      {statusLabel}
+                    </span>
+                    <Link
+                      href={`/p/${participantId}/matches/${match.id}`}
+                      className="min-h-11 rounded-full bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                    >
+                      {buttonLabel}
+                    </Link>
+                  </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-3 sm:items-end">
-                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
-                    {getMatchStatusLabel(match)}
-                  </span>
-                  <Link
-                    href={`/p/${participantId}/matches/${match.id}`}
-                    className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                  >
-                    Ver detalle
-                  </Link>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-2 text-sm text-zinc-700">
-                <p>
-                  <span className="font-medium text-zinc-900">Tu pronóstico:</span>{" "}
-                  {formatPredictionSummary(match.currentPrediction)}
-                </p>
-                {match.city || match.venue ? (
-                  <p className="text-zinc-500">
-                    {[match.city, match.venue].filter(Boolean).join(" · ")}
+                <div className="mt-4 grid gap-2 text-sm text-zinc-700">
+                  <p>
+                    <span className="font-medium text-zinc-900">
+                      Tu pronóstico:
+                    </span>{" "}
+                    <span
+                      className={
+                        match.currentPrediction
+                          ? "text-zinc-700"
+                          : "font-medium text-amber-700"
+                      }
+                    >
+                      {formatPredictionSummary(match.currentPrediction)}
+                    </span>
                   </p>
-                ) : null}
-              </div>
-            </article>
+                  {match.city || match.venue ? (
+                    <p className="text-zinc-500">
+                      {[match.city, match.venue].filter(Boolean).join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+              </article>
             );
           })}
         </section>

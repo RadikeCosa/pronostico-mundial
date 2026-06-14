@@ -4,7 +4,11 @@ import { PredictionForm } from "@/components/prediction-form";
 import { LocalDateTime } from "@/components/local-date-time";
 import { upsertPredictionAction } from "../../actions";
 import { getCurrentParticipant } from "@/lib/auth/session";
-import { formatPredictionSummary, formatStageLabel, getMatchStatusLabel } from "@/lib/presentation";
+import {
+  formatPredictionSummary,
+  formatStageLabel,
+  getMatchStatusLabel,
+} from "@/lib/presentation";
 import { getMatchReadModelById, getParticipantById } from "@/lib/read-models";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +17,9 @@ type MatchDetailPageProps = {
   params: Promise<{ participantId: string; matchId: string }>;
 };
 
-export default async function MatchDetailPage({ params }: MatchDetailPageProps) {
+export default async function MatchDetailPage({
+  params,
+}: MatchDetailPageProps) {
   const { participantId, matchId } = await params;
   const now = new Date();
   const currentParticipant = await getCurrentParticipant();
@@ -40,10 +46,13 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
-      <header className="rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-black/10">
+      <header className="rounded-4xl bg-white p-6 shadow-sm ring-1 ring-black/10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Link href={`/p/${participantId}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+            <Link
+              href={`/p/${participantId}`}
+              className="text-sm text-zinc-500 hover:text-zinc-900"
+            >
               ← Volver a partidos
             </Link>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
@@ -58,10 +67,13 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               ) : null}
             </div>
             <h1 className="mt-2 text-3xl font-semibold text-zinc-950">
-              {matchReadModel.match.homeTeamName} vs {matchReadModel.match.awayTeamName}
+              {matchReadModel.match.homeTeamName} vs{" "}
+              {matchReadModel.match.awayTeamName}
             </h1>
             <p className="mt-2 text-sm text-zinc-600">
-              <LocalDateTime value={matchReadModel.match.kickoffAt.toISOString()} />
+              <LocalDateTime
+                value={matchReadModel.match.kickoffAt.toISOString()}
+              />
             </p>
           </div>
           <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
@@ -75,8 +87,10 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="flex flex-col gap-4">
-          <section className="rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-zinc-950">Tu pronóstico</h2>
+          <section className="rounded-4xl border border-black/10 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-zinc-950">
+              Tu pronóstico
+            </h2>
             <p className="mt-2 text-sm text-zinc-600">
               {formatPredictionSummary(matchReadModel.currentPrediction)}
             </p>
@@ -88,39 +102,47 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               defaultValues={{
                 homeScore: matchReadModel.currentPrediction?.homeScore ?? null,
                 awayScore: matchReadModel.currentPrediction?.awayScore ?? null,
-                advancesTeamName: matchReadModel.currentPrediction?.advancesTeamName ?? null,
+                advancesTeamName:
+                  matchReadModel.currentPrediction?.advancesTeamName ?? null,
               }}
               homeTeamName={matchReadModel.match.homeTeamName}
               awayTeamName={matchReadModel.match.awayTeamName}
               showAdvancingTeamField={showAdvancingTeamField}
             />
           ) : (
-            <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-              El partido ya empezó. El pronóstico quedó bloqueado y no se puede editar.
+            <section className="rounded-4xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+              El partido ya empezó. El pronóstico quedó bloqueado y no se puede
+              editar.
             </section>
           )}
         </div>
 
         <div className="flex flex-col gap-4">
-          <section className="rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm">
+          <section className="rounded-4xl border border-black/10 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-zinc-950">Resultado</h2>
             {matchReadModel.result ? (
               <p className="mt-2 text-sm text-zinc-700">
-                {matchReadModel.result.homeScore} - {matchReadModel.result.awayScore}
+                {matchReadModel.result.homeScore} -{" "}
+                {matchReadModel.result.awayScore}
                 {matchReadModel.result.advancesTeamName
                   ? ` · clasifica ${matchReadModel.result.advancesTeamName}`
                   : ""}
               </p>
             ) : (
-              <p className="mt-2 text-sm text-zinc-600">Todavía no hay resultado cargado.</p>
+              <p className="mt-2 text-sm text-zinc-600">
+                Todavía no hay resultado cargado.
+              </p>
             )}
           </section>
 
-          <section className="rounded-[2rem] border border-black/10 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-zinc-950">Pronósticos visibles</h2>
+          <section className="rounded-4xl border border-black/10 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-zinc-950">
+              Pronósticos visibles
+            </h2>
             {!matchReadModel.canRevealPredictions ? (
               <p className="mt-2 text-sm text-zinc-600">
-                Los pronósticos de los demás participantes se revelan desde el inicio del partido.
+                Los pronósticos de los demás participantes se revelan desde el
+                inicio del partido.
               </p>
             ) : (
               <div className="mt-4 flex flex-col gap-3">
@@ -136,8 +158,10 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                         </h3>
                         <p className="mt-1 text-sm text-zinc-700">
                           {visiblePrediction.status === "missing"
-                            ? "No pronosticó"
-                            : formatPredictionSummary(visiblePrediction.prediction)}
+                            ? "Sin pronóstico"
+                            : formatPredictionSummary(
+                                visiblePrediction.prediction,
+                              )}
                         </p>
                       </div>
                       {visiblePrediction.score ? (
@@ -147,7 +171,9 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                       ) : null}
                     </div>
                     {visiblePrediction.score ? (
-                      <p className="mt-2 text-xs text-zinc-500">{visiblePrediction.score.reason}</p>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        {visiblePrediction.score.reason}
+                      </p>
                     ) : null}
                   </article>
                 ))}
