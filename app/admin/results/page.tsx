@@ -4,14 +4,24 @@ import { ResultForm } from "@/components/result-form";
 import { requireAdmin } from "@/lib/auth/session";
 import { formatMatchDayLabel } from "@/lib/date-format";
 import { formatResultTrace, formatStageLabel } from "@/lib/presentation";
-import { getAdminResultsGroupedByDay } from "@/lib/read-models";
+import { getAdminResultsGroupedByDay, getTournamentGoalStats } from "@/lib/read-models";
 import { upsertMatchResultAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
+function formatGoalAverage(value: number): string {
+  return value.toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default async function AdminResultsPage() {
   await requireAdmin();
-  const groupedMatches = await getAdminResultsGroupedByDay();
+  const [groupedMatches, goalStats] = await Promise.all([
+    getAdminResultsGroupedByDay(),
+    getTournamentGoalStats(),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
@@ -38,6 +48,39 @@ export default async function AdminResultsPage() {
           </Link>
         </div>
       </header>
+
+      <section className="rounded-[2rem] border border-sky-200 bg-sky-50 p-5 shadow-sm">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-sky-950">Goles del Mundial</h2>
+          <p className="text-sm text-sky-800">
+            Estadísticas calculadas solo con resultados cargados.
+          </p>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl bg-white/75 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+              Total
+            </p>
+            <p className="mt-1 text-3xl font-bold text-sky-950">{goalStats.totalGoals}</p>
+          </div>
+          <div className="rounded-2xl bg-white/75 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+              Promedio
+            </p>
+            <p className="mt-1 text-3xl font-bold text-sky-950">
+              {formatGoalAverage(goalStats.averageGoalsPerMatch)}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white/75 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+              Partidos con resultado
+            </p>
+            <p className="mt-1 text-3xl font-bold text-sky-950">
+              {goalStats.resultedMatches}
+            </p>
+          </div>
+        </div>
+      </section>
 
       <div className="flex flex-col gap-8">
         {groupedMatches.map((group) => (

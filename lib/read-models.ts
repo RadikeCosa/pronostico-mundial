@@ -371,6 +371,19 @@ export function buildTournamentGoalStats(
   };
 }
 
+export async function getTournamentGoalStats(
+  prismaClient: PrismaClient = getPrismaClient(),
+): Promise<TournamentGoalStats> {
+  const results = await prismaClient.matchResult.findMany({
+    select: {
+      homeScore: true,
+      awayScore: true,
+    },
+  });
+
+  return buildTournamentGoalStats(results);
+}
+
 export function buildMatchReadModel(args: {
   match: MatchWithRelationsRecord;
   participants: ParticipantRecord[];
@@ -652,7 +665,7 @@ export async function getMatchReadModelById(
   now: Date = new Date(),
   prismaClient: PrismaClient = getPrismaClient(),
 ): Promise<MatchReadModel | null> {
-  const [participants, match, results] = await Promise.all([
+  const [participants, match, tournamentGoalStats] = await Promise.all([
     prismaClient.participant.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -690,12 +703,7 @@ export async function getMatchReadModelById(
         },
       },
     }),
-    prismaClient.matchResult.findMany({
-      select: {
-        homeScore: true,
-        awayScore: true,
-      },
-    }),
+    getTournamentGoalStats(prismaClient),
   ]);
 
   if (!match) {
@@ -713,7 +721,7 @@ export async function getMatchReadModelById(
     match,
     participants,
     currentParticipantName: currentParticipant.name,
-    tournamentGoalStats: buildTournamentGoalStats(results),
+    tournamentGoalStats,
     now,
   });
 }

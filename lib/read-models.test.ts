@@ -7,6 +7,7 @@ import {
   getAdminResultsGroupedByDay,
   getMatchReadModelById,
   getMatchDay,
+  getTournamentGoalStats,
   groupMatchesByDay,
   isMatchLocked,
   toMatchListItem,
@@ -333,6 +334,23 @@ describe("read models", () => {
       totalGoals: 8,
       resultedMatches: 3,
       averageGoalsPerMatch: 8 / 3,
+    });
+  });
+
+  it("loads tournament goal stats from persisted results", async () => {
+    const stats = await getTournamentGoalStats({
+      matchResult: {
+        findMany: async () => [
+          { homeScore: 2, awayScore: 1 },
+          { homeScore: 1, awayScore: 1 },
+        ],
+      },
+    } as never);
+
+    expect(stats).toEqual({
+      totalGoals: 5,
+      resultedMatches: 2,
+      averageGoalsPerMatch: 2.5,
     });
   });
 
