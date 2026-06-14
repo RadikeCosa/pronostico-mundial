@@ -63,7 +63,9 @@ export default async function AdminParticipantsPage() {
                   <th className="px-4 py-3 font-semibold">Tipo</th>
                   <th className="px-4 py-3 font-semibold">Estado</th>
                   <th className="px-4 py-3 font-semibold">Contraseña</th>
-                  <th className="px-4 py-3 font-semibold">Acciones</th>
+                  <th className="px-4 py-3 text-center font-semibold">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -110,7 +112,7 @@ export default async function AdminParticipantsPage() {
                         {participant.passwordHash ? "Configurada" : "Pendiente"}
                       </span>
                     </td>
-                    <td className="px-4 py-4 align-top">
+                    <td className="px-4 py-4 text-center">
                       <AdminParticipantRowActions
                         isActive={participant.active}
                         statusAction={
