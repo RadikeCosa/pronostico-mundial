@@ -407,7 +407,8 @@ export default async function ParticipantPage({
                           {standingsStats.worstPredictions[0].participantName}
                         </p>
                         <p className="mt-1 text-sm text-orange-900">
-                          Partido {standingsStats.worstPredictions[0].matchNumber}:{" "}
+                          Partido{" "}
+                          {standingsStats.worstPredictions[0].matchNumber}:{" "}
                           {standingsStats.worstPredictions[0].homeTeamName} vs{" "}
                           {standingsStats.worstPredictions[0].awayTeamName}
                         </p>
@@ -417,7 +418,8 @@ export default async function ParticipantPage({
                             standingsStats.worstPredictions[0].prediction,
                           )}{" "}
                           · resultado{" "}
-                          {standingsStats.worstPredictions[0].result?.homeScore} -{" "}
+                          {standingsStats.worstPredictions[0].result?.homeScore}{" "}
+                          -{" "}
                           {standingsStats.worstPredictions[0].result?.awayScore}
                         </p>
                       </div>
@@ -429,8 +431,10 @@ export default async function ParticipantPage({
                   {standingsStats.worstPredictions.length > 1 ? (
                     <p className="text-sm text-orange-900/80">
                       Hay {standingsStats.worstPredictions.length - 1} caso
-                      {standingsStats.worstPredictions.length === 2 ? "" : "s"}
-                      {" "}más con la misma diferencia.
+                      {standingsStats.worstPredictions.length === 2
+                        ? ""
+                        : "s"}{" "}
+                      más con la misma diferencia.
                     </p>
                   ) : null}
                 </div>
