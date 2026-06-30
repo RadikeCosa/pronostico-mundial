@@ -32,6 +32,7 @@ export type ParticipantMatchListItem = MatchListItem & {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   } | null;
   hasResult: boolean;
 };
@@ -58,6 +59,7 @@ export type ParticipantPredictionView = {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   } | null;
   score: ScoreBreakdown | null;
 };
@@ -73,11 +75,13 @@ export type WorstPredictionView = {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   };
   prediction: {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   };
   distance: number;
 };
@@ -86,6 +90,7 @@ export type MatchResultView = {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   createdByParticipantName?: string | null;
   updatedByParticipantName?: string | null;
 };
@@ -107,6 +112,7 @@ export type MatchReadModel = {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   } | null;
   isLocked: boolean;
   canRevealPredictions: boolean;
@@ -136,12 +142,14 @@ type PredictionRecord = {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
 };
 
 type ResultRecord = {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   createdByParticipant?: { name: string } | null;
   updatedByParticipant?: { name: string } | null;
 } | null;
@@ -204,6 +212,7 @@ function normalizeMatchResult(result: ResultRecord): MatchResultView | null {
     homeScore: result.homeScore,
     awayScore: result.awayScore,
     advancesTeamName: result.advancesTeamName,
+    resolutionMethod: result.resolutionMethod,
     createdByParticipantName: result.createdByParticipant?.name
       ? formatParticipantName(result.createdByParticipant.name)
       : null,
@@ -224,6 +233,7 @@ function normalizePrediction(
     homeScore: prediction.homeScore,
     awayScore: prediction.awayScore,
     advancesTeamName: prediction.advancesTeamName,
+    resolutionMethod: prediction.resolutionMethod,
   };
 }
 
@@ -322,20 +332,22 @@ export function buildVisiblePredictions(args: {
     const prediction = predictionByParticipantId.get(participant.id);
     const score = match.result
       ? calculatePredictionScore(
-          prediction
-            ? {
-                homeScore: prediction.homeScore,
-                awayScore: prediction.awayScore,
-                advancesTeamName: prediction.advancesTeamName,
-              }
-            : null,
-          {
-            homeScore: match.result.homeScore,
-            awayScore: match.result.awayScore,
-            advancesTeamName: match.result.advancesTeamName,
-          },
-          { stage: match.stage },
-        )
+        prediction
+          ? {
+            homeScore: prediction.homeScore,
+            awayScore: prediction.awayScore,
+            advancesTeamName: prediction.advancesTeamName,
+            resolutionMethod: prediction.resolutionMethod,
+          }
+          : null,
+        {
+          homeScore: match.result.homeScore,
+          awayScore: match.result.awayScore,
+          advancesTeamName: match.result.advancesTeamName,
+          resolutionMethod: match.result.resolutionMethod,
+        },
+        { stage: match.stage },
+      )
       : null;
 
     return {
@@ -392,11 +404,13 @@ export function buildGlobalWorstPredictions(
         homeScore: match.result.homeScore,
         awayScore: match.result.awayScore,
         advancesTeamName: match.result.advancesTeamName,
+        resolutionMethod: match.result.resolutionMethod,
       },
       prediction: {
         homeScore: prediction.homeScore,
         awayScore: prediction.awayScore,
         advancesTeamName: prediction.advancesTeamName,
+        resolutionMethod: prediction.resolutionMethod,
       },
       distance:
         Math.abs(prediction.homeScore - match.result.homeScore) +
@@ -438,6 +452,7 @@ export async function getStandingsStats(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
             participant: {
               select: {
                 name: true,
@@ -450,6 +465,7 @@ export async function getStandingsStats(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
           },
         },
       },
@@ -459,7 +475,7 @@ export async function getStandingsStats(
   return {
     goalStats,
     worstPredictions: buildGlobalWorstPredictions(
-      matches.filter((match): match is GlobalWorstPredictionMatchRecord => match.result !== null),
+      matches.filter((match) => match.result !== null) as GlobalWorstPredictionMatchRecord[],
     ),
   };
 }
@@ -532,17 +548,19 @@ export function buildStandingsTable(args: {
       const score = calculatePredictionScore(
         prediction
           ? {
-              homeScore: prediction.homeScore,
-              awayScore: prediction.awayScore,
-              advancesTeamName: prediction.advancesTeamName,
-            }
+            homeScore: prediction.homeScore,
+            awayScore: prediction.awayScore,
+            advancesTeamName: prediction.advancesTeamName,
+            resolutionMethod: prediction.resolutionMethod,
+          }
           : null,
         match.result
           ? {
-              homeScore: match.result.homeScore,
-              awayScore: match.result.awayScore,
-              advancesTeamName: match.result.advancesTeamName,
-            }
+            homeScore: match.result.homeScore,
+            awayScore: match.result.awayScore,
+            advancesTeamName: match.result.advancesTeamName,
+            resolutionMethod: match.result.resolutionMethod,
+          }
           : null,
         { stage: match.stage },
       );
@@ -625,9 +643,9 @@ export async function getParticipantById(
 
   return participant
     ? {
-        ...participant,
-        name: formatParticipantName(participant.name),
-      }
+      ...participant,
+      name: formatParticipantName(participant.name),
+    }
     : null;
 }
 
@@ -701,6 +719,7 @@ export async function getParticipantMatches(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
         },
       },
       result: {
@@ -708,6 +727,7 @@ export async function getParticipantMatches(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
           createdByParticipant: {
             select: {
               name: true,
@@ -765,6 +785,7 @@ export async function getMatchReadModelById(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
           },
         },
         result: {
@@ -772,6 +793,7 @@ export async function getMatchReadModelById(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
           },
         },
       },
@@ -828,6 +850,7 @@ export async function getStandingsTable(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
           },
         },
         result: {
@@ -835,6 +858,7 @@ export async function getStandingsTable(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
           },
         },
       },
@@ -869,6 +893,7 @@ export async function getAdminResultsGroupedByDay(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
           createdByParticipant: {
             select: {
               name: true,

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentParticipant } from "@/lib/auth/session";
 import { getPrismaClient } from "@/lib/prisma";
+import { validateKnockoutWriteValues } from "@/lib/knockout-validation";
 import { isMatchLocked } from "@/lib/read-models";
 import type { PredictionFormState } from "@/components/prediction-form";
 
@@ -58,6 +59,8 @@ export async function upsertPredictionAction(
     select: {
       id: true,
       stage: true,
+      homeTeamName: true,
+      awayTeamName: true,
       kickoffAt: true,
     },
   });
@@ -87,10 +90,24 @@ export async function upsertPredictionAction(
   }
 
   const advancesTeamNameRaw = formData.get("advancesTeamName");
-  const advancesTeamName =
-    typeof advancesTeamNameRaw === "string" && advancesTeamNameRaw.trim() !== ""
-      ? advancesTeamNameRaw.trim()
-      : null;
+  const resolutionMethodRaw = formData.get("resolutionMethod");
+
+  const knockoutValidation = validateKnockoutWriteValues({
+    stage: match.stage,
+    homeTeamName: match.homeTeamName,
+    awayTeamName: match.awayTeamName,
+    homeScore,
+    awayScore,
+    advancesTeamNameRaw,
+    resolutionMethodRaw,
+  });
+
+  if (knockoutValidation.status === "error") {
+    return {
+      status: "error",
+      message: knockoutValidation.message,
+    };
+  }
 
   const existingPrediction = await prisma.prediction.findUnique({
     where: {
@@ -108,7 +125,8 @@ export async function upsertPredictionAction(
       data: {
         homeScore,
         awayScore,
-        advancesTeamName,
+        advancesTeamName: knockoutValidation.values.advancesTeamName,
+        resolutionMethod: knockoutValidation.values.resolutionMethod,
       },
     });
   } else {
@@ -118,7 +136,8 @@ export async function upsertPredictionAction(
         matchId,
         homeScore,
         awayScore,
-        advancesTeamName,
+        advancesTeamName: knockoutValidation.values.advancesTeamName,
+        resolutionMethod: knockoutValidation.values.resolutionMethod,
       },
     });
   }

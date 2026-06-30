@@ -18,16 +18,18 @@ function createPrediction(
   homeScore: number,
   awayScore: number,
   advancesTeamName?: string | null,
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null,
 ): NonNullable<PredictionInput> {
-  return { homeScore, awayScore, advancesTeamName };
+  return { homeScore, awayScore, advancesTeamName, resolutionMethod };
 }
 
 function createResult(
   homeScore: number,
   awayScore: number,
   advancesTeamName?: string | null,
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null,
 ): NonNullable<ResultInput> {
-  return { homeScore, awayScore, advancesTeamName };
+  return { homeScore, awayScore, advancesTeamName, resolutionMethod };
 }
 
 describe("calculatePredictionScore", () => {
@@ -42,6 +44,8 @@ describe("calculatePredictionScore", () => {
       exactScore: 3,
       outcome: 0,
       advances: 0,
+      method: 0,
+      bonus: 0,
       total: 3,
       reason: "Resultado exacto en fase de grupos.",
     });
@@ -93,6 +97,8 @@ describe("calculatePredictionScore", () => {
       exactScore: 0,
       outcome: 0,
       advances: 0,
+      method: 0,
+      bonus: 0,
       total: 0,
       reason: "Todavía no hay resultado cargado.",
     });
@@ -109,15 +115,17 @@ describe("calculatePredictionScore", () => {
       exactScore: 0,
       outcome: 0,
       advances: 0,
+      method: 0,
+      bonus: 0,
       total: 0,
       reason: "No cargó pronóstico.",
     });
   });
 
-  it("returns 4 for an exact knockout draw with the correct advancing team", () => {
+  it("returns 6 for an exact knockout score with correct advancing team and method", () => {
     const score = calculatePredictionScore(
-      createPrediction(1, 1, "Argentina"),
-      createResult(1, 1, "Argentina"),
+      createPrediction(2, 1, "Argentina", "REGULAR"),
+      createResult(2, 1, "Argentina", "REGULAR"),
       createKnockoutMatch(),
     );
 
@@ -125,50 +133,89 @@ describe("calculatePredictionScore", () => {
       exactScore: 3,
       outcome: 0,
       advances: 1,
-      total: 4,
-      reason: "Empate exacto y clasificado acertado en eliminación directa.",
+      method: 1,
+      bonus: 1,
+      total: 6,
+      reason:
+        "Marcador exacto a 90 minutos. Clasificado acertado. Método de resolución acertado. Bonus por exacto + clasificado.",
     });
   });
 
-  it("returns 3 for an exact knockout draw with the wrong advancing team", () => {
+  it("returns 1 for a non-exact knockout score with correct outcome only", () => {
     const score = calculatePredictionScore(
-      createPrediction(1, 1, "Brazil"),
-      createResult(1, 1, "Argentina"),
+      createPrediction(1, 0, "Brazil", "REGULAR"),
+      createResult(3, 2, "Brazil", "REGULAR"),
       createKnockoutMatch(),
     );
 
     expect(score.total).toBe(3);
-    expect(score.advances).toBe(0);
-    expect(score.reason).toBe(
-      "Empate exacto, pero el clasificado no fue acertado.",
-    );
+    expect(score.outcome).toBe(1);
+    expect(score.exactScore).toBe(0);
+    expect(score.advances).toBe(1);
+    expect(score.method).toBe(1);
   });
 
-  it("returns 1 in knockout when the draw is not exact but the advancing team is correct", () => {
+  it("returns points for draw at 90 resolved in extra time", () => {
     const score = calculatePredictionScore(
-      createPrediction(0, 0, "Argentina"),
-      createResult(1, 1, "Argentina"),
+      createPrediction(0, 0, "Argentina", "EXTRA_TIME"),
+      createResult(1, 1, "Argentina", "EXTRA_TIME"),
       createKnockoutMatch(),
     );
 
-    expect(score).toEqual({
-      exactScore: 0,
-      outcome: 0,
-      advances: 1,
-      total: 1,
-      reason:
-        "Empate pronosticado sin resultado exacto, pero con clasificado acertado.",
-    });
+    expect(score.exactScore).toBe(0);
+    expect(score.outcome).toBe(1);
+    expect(score.advances).toBe(1);
+    expect(score.method).toBe(1);
+    expect(score.total).toBe(3);
+  });
+
+  it("returns points for draw at 90 resolved by penalties", () => {
+    const score = calculatePredictionScore(
+      createPrediction(1, 1, "Paraguay", "PENALTIES"),
+      createResult(1, 1, "Paraguay", "PENALTIES"),
+      createKnockoutMatch(),
+    );
+
+    expect(score.exactScore).toBe(3);
+    expect(score.advances).toBe(1);
+    expect(score.method).toBe(1);
+    expect(score.bonus).toBe(1);
+    expect(score.total).toBe(6);
+  });
+
+  it("keeps exact + classified bonus even with wrong method", () => {
+    const score = calculatePredictionScore(
+      createPrediction(1, 1, "Paraguay", "EXTRA_TIME"),
+      createResult(1, 1, "Paraguay", "PENALTIES"),
+      createKnockoutMatch(),
+    );
+
+    expect(score.exactScore).toBe(3);
+    expect(score.advances).toBe(1);
+    expect(score.method).toBe(0);
+    expect(score.bonus).toBe(1);
+    expect(score.total).toBe(5);
+  });
+
+  it("does not award method point for legacy knockout predictions without method", () => {
+    const score = calculatePredictionScore(
+      createPrediction(1, 1, "Paraguay"),
+      createResult(1, 1, "Paraguay", "PENALTIES"),
+      createKnockoutMatch(),
+    );
+
+    expect(score.method).toBe(0);
+    expect(score.total).toBe(5);
   });
 
   it("treats any non-group stage as knockout", () => {
     const score = calculatePredictionScore(
-      createPrediction(2, 2, "Mexico"),
-      createResult(2, 2, "Mexico"),
+      createPrediction(2, 2, "Mexico", "PENALTIES"),
+      createResult(2, 2, "Mexico", "PENALTIES"),
       { stage: "Semifinal" },
     );
 
-    expect(score.total).toBe(4);
-    expect(score.advances).toBe(1);
+    expect(score.total).toBe(6);
+    expect(score.method).toBe(1);
   });
 });

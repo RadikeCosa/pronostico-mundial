@@ -83,6 +83,7 @@ describe("upsertMatchResultAction auth", () => {
       homeScoreRaw: "2",
       awayScoreRaw: "1",
       advancesTeamNameRaw: null,
+      resolutionMethodRaw: null,
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/results");
   });

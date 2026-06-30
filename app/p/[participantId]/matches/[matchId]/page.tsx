@@ -6,6 +6,7 @@ import { upsertPredictionAction } from "../../actions";
 import { getCurrentParticipant } from "@/lib/auth/session";
 import {
   formatPredictionSummary,
+  formatResultSummary,
   formatStageLabel,
   getMatchStatusLabel,
 } from "@/lib/presentation";
@@ -41,7 +42,7 @@ export default async function MatchDetailPage({
     notFound();
   }
 
-  const showAdvancingTeamField = matchReadModel.match.stage !== "GROUP";
+  const isKnockout = matchReadModel.match.stage !== "GROUP";
   const action = upsertPredictionAction.bind(null, participantId, matchId);
 
   return (
@@ -92,7 +93,11 @@ export default async function MatchDetailPage({
               Tu pronóstico
             </h2>
             <p className="mt-2 text-sm text-zinc-600">
-              {formatPredictionSummary(matchReadModel.currentPrediction)}
+              {formatPredictionSummary(matchReadModel.currentPrediction, {
+                stage: matchReadModel.match.stage,
+                homeTeamName: matchReadModel.match.homeTeamName,
+                awayTeamName: matchReadModel.match.awayTeamName,
+              })}
             </p>
           </section>
 
@@ -104,10 +109,12 @@ export default async function MatchDetailPage({
                 awayScore: matchReadModel.currentPrediction?.awayScore ?? null,
                 advancesTeamName:
                   matchReadModel.currentPrediction?.advancesTeamName ?? null,
+                resolutionMethod:
+                  matchReadModel.currentPrediction?.resolutionMethod ?? null,
               }}
               homeTeamName={matchReadModel.match.homeTeamName}
               awayTeamName={matchReadModel.match.awayTeamName}
-              showAdvancingTeamField={showAdvancingTeamField}
+              isKnockout={isKnockout}
             />
           ) : (
             <section className="rounded-4xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
@@ -122,11 +129,11 @@ export default async function MatchDetailPage({
             <h2 className="text-lg font-semibold text-zinc-950">Resultado</h2>
             {matchReadModel.result ? (
               <p className="mt-2 text-sm text-zinc-700">
-                {matchReadModel.result.homeScore} -{" "}
-                {matchReadModel.result.awayScore}
-                {matchReadModel.result.advancesTeamName
-                  ? ` · clasifica ${matchReadModel.result.advancesTeamName}`
-                  : ""}
+                {formatResultSummary(matchReadModel.result, {
+                  stage: matchReadModel.match.stage,
+                  homeTeamName: matchReadModel.match.homeTeamName,
+                  awayTeamName: matchReadModel.match.awayTeamName,
+                })}
               </p>
             ) : (
               <p className="mt-2 text-sm text-zinc-600">
@@ -161,6 +168,13 @@ export default async function MatchDetailPage({
                             ? "Sin pronóstico"
                             : formatPredictionSummary(
                                 visiblePrediction.prediction,
+                                {
+                                  stage: matchReadModel.match.stage,
+                                  homeTeamName:
+                                    matchReadModel.match.homeTeamName,
+                                  awayTeamName:
+                                    matchReadModel.match.awayTeamName,
+                                },
                               )}
                         </p>
                       </div>

@@ -17,10 +17,11 @@ type PredictionFormProps = {
     homeScore: number | null;
     awayScore: number | null;
     advancesTeamName: string | null;
+    resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   };
   homeTeamName: string;
   awayTeamName: string;
-  showAdvancingTeamField: boolean;
+  isKnockout: boolean;
 };
 
 const initialState: PredictionFormState = {
@@ -33,7 +34,7 @@ export function PredictionForm({
   defaultValues,
   homeTeamName,
   awayTeamName,
-  showAdvancingTeamField,
+  isKnockout,
 }: PredictionFormProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -78,19 +79,40 @@ export function PredictionForm({
         </label>
       </div>
 
-      {showAdvancingTeamField ? (
-        <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-          ¿Quién clasifica?
-          <input
-            name="advancesTeamName"
-            type="text"
-            defaultValue={defaultValues.advancesTeamName ?? ""}
-            className="rounded-2xl border border-black/10 px-3 py-2 text-base text-zinc-900 outline-none focus:border-black"
-          />
-          <span className="text-xs font-normal text-zinc-500">
-            Solo si hay empate en goles.
-          </span>
-        </label>
+      {isKnockout ? (
+        <>
+          <p className="text-sm text-zinc-700">
+            En eliminación directa, cargá el marcador a los 90 minutos
+            reglamentarios.
+          </p>
+          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            ¿Quién clasifica?
+            <select
+              name="advancesTeamName"
+              required
+              defaultValue={defaultValues.advancesTeamName ?? ""}
+              className="rounded-2xl border border-black/10 px-3 py-2 text-base text-zinc-900 outline-none focus:border-black"
+            >
+              <option value="">Seleccionar equipo</option>
+              <option value={homeTeamName}>{homeTeamName}</option>
+              <option value={awayTeamName}>{awayTeamName}</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            Método de resolución
+            <select
+              name="resolutionMethod"
+              required
+              defaultValue={defaultValues.resolutionMethod ?? ""}
+              className="rounded-2xl border border-black/10 px-3 py-2 text-base text-zinc-900 outline-none focus:border-black"
+            >
+              <option value="">Seleccionar método</option>
+              <option value="REGULAR">En 90 minutos</option>
+              <option value="EXTRA_TIME">En alargue</option>
+              <option value="PENALTIES">Por penales</option>
+            </select>
+          </label>
+        </>
       ) : null}
 
       {state.message ? (

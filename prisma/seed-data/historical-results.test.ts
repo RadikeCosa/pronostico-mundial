@@ -12,6 +12,7 @@ describe("historical knockout result seed", () => {
                 homeScore: number;
                 awayScore: number;
                 advancesTeamName: string | null;
+                resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES";
                 updatedByParticipantId: string | null;
             };
             create: {
@@ -19,6 +20,7 @@ describe("historical knockout result seed", () => {
                 homeScore: number;
                 awayScore: number;
                 advancesTeamName: string | null;
+                resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES";
                 createdByParticipantId: string | null;
                 updatedByParticipantId: string | null;
             };
@@ -48,6 +50,7 @@ describe("historical knockout result seed", () => {
                 homeScore: call.update.homeScore,
                 awayScore: call.update.awayScore,
                 advancesTeamName: call.update.advancesTeamName,
+                resolutionMethod: call.update.resolutionMethod,
             })),
         ).toEqual([
             {
@@ -55,24 +58,28 @@ describe("historical knockout result seed", () => {
                 homeScore: 0,
                 awayScore: 1,
                 advancesTeamName: "Canada",
+                resolutionMethod: "REGULAR",
             },
             {
                 matchId: "m-74",
                 homeScore: 2,
                 awayScore: 1,
                 advancesTeamName: "Brazil",
+                resolutionMethod: "REGULAR",
             },
             {
                 matchId: "m-75",
                 homeScore: 1,
                 awayScore: 1,
                 advancesTeamName: "Paraguay",
+                resolutionMethod: "PENALTIES",
             },
             {
                 matchId: "m-76",
                 homeScore: 1,
                 awayScore: 1,
                 advancesTeamName: "Morocco",
+                resolutionMethod: "PENALTIES",
             },
         ]);
 

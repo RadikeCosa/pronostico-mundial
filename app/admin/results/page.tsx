@@ -3,7 +3,11 @@ import Link from "next/link";
 import { ResultForm } from "@/components/result-form";
 import { requireAdmin } from "@/lib/auth/session";
 import { formatMatchDayLabel } from "@/lib/date-format";
-import { formatResultTrace, formatStageLabel } from "@/lib/presentation";
+import {
+  formatResultSummary,
+  formatResultTrace,
+  formatStageLabel,
+} from "@/lib/presentation";
 import { getAdminResultsGroupedByDay } from "@/lib/read-models";
 import { upsertMatchResultAction } from "./actions";
 
@@ -55,7 +59,7 @@ export default async function AdminResultsPage() {
             <div className="grid gap-4">
               {group.matches.map((match) => {
                 const action = upsertMatchResultAction.bind(null, match.id);
-                const showAdvancingTeamField = match.stage !== "GROUP";
+                const isKnockout = match.stage !== "GROUP";
                 const resultTrace = formatResultTrace(match.result);
 
                 return (
@@ -91,13 +95,11 @@ export default async function AdminResultsPage() {
                           <span className="font-medium text-zinc-950">
                             Resultado actual:
                           </span>{" "}
-                          {match.result
-                            ? `${match.result.homeScore} - ${match.result.awayScore}${
-                                match.result.advancesTeamName
-                                  ? ` · clasifica ${match.result.advancesTeamName}`
-                                  : ""
-                              }`
-                            : "Sin resultado"}
+                          {formatResultSummary(match.result, {
+                            stage: match.stage,
+                            homeTeamName: match.homeTeamName,
+                            awayTeamName: match.awayTeamName,
+                          })}
                         </p>
                         {resultTrace ? (
                           <p className="text-xs text-zinc-500">{resultTrace}</p>
@@ -112,10 +114,12 @@ export default async function AdminResultsPage() {
                             awayScore: match.result?.awayScore ?? null,
                             advancesTeamName:
                               match.result?.advancesTeamName ?? null,
+                            resolutionMethod:
+                              match.result?.resolutionMethod ?? null,
                           }}
                           homeTeamName={match.homeTeamName}
                           awayTeamName={match.awayTeamName}
-                          showAdvancingTeamField={showAdvancingTeamField}
+                          isKnockout={isKnockout}
                         />
                       ) : (
                         <section className="rounded-4xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">

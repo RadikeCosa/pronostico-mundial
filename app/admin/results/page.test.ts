@@ -26,6 +26,7 @@ vi.mock("@/lib/date-format", () => ({
 }));
 
 vi.mock("@/lib/presentation", () => ({
+    formatResultSummary: () => "Sin resultado",
     formatResultTrace: () => null,
     formatStageLabel: (value: string) => value,
 }));

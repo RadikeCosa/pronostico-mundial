@@ -16,6 +16,12 @@ enum MatchStage {
   FINAL
 }
 
+enum ResolutionMethod {
+  REGULAR
+  EXTRA_TIME
+  PENALTIES
+}
+
 model Participant {
   id             String       @id @default(cuid())
   name           String       @unique
@@ -66,6 +72,7 @@ model Prediction {
   homeScore        Int
   awayScore        Int
   advancesTeamName String?
+  resolutionMethod ResolutionMethod?
   participant      Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
   match            Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
   createdAt        DateTime    @default(now())
@@ -80,6 +87,7 @@ model MatchResult {
   homeScore              Int
   awayScore              Int
   advancesTeamName       String?
+  resolutionMethod       ResolutionMethod?
   createdByParticipantId String?
   updatedByParticipantId String?
   match                  Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)

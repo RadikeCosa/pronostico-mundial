@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { ResultFormState } from "@/components/result-form";
+import { validateKnockoutWriteValues } from "./knockout-validation";
 import { getPrismaClient } from "./prisma";
 import { isMatchLocked } from "./read-models";
 
@@ -20,6 +21,7 @@ type UpsertAdminMatchResultArgs = {
   homeScoreRaw: FormDataEntryValue | null;
   awayScoreRaw: FormDataEntryValue | null;
   advancesTeamNameRaw: FormDataEntryValue | null;
+  resolutionMethodRaw: FormDataEntryValue | null;
   now?: Date;
   prismaClient?: AdminResultsPrismaClient;
 };
@@ -42,6 +44,7 @@ export async function upsertAdminMatchResult({
   homeScoreRaw,
   awayScoreRaw,
   advancesTeamNameRaw,
+  resolutionMethodRaw,
   now = new Date(),
   prismaClient = getPrismaClient(),
 }: UpsertAdminMatchResultArgs): Promise<ResultFormState> {
@@ -60,6 +63,8 @@ export async function upsertAdminMatchResult({
     select: {
       id: true,
       stage: true,
+      homeTeamName: true,
+      awayTeamName: true,
       kickoffAt: true,
     },
   });
@@ -78,12 +83,22 @@ export async function upsertAdminMatchResult({
     };
   }
 
-  const advancesTeamName =
-    match.stage !== "GROUP" &&
-    typeof advancesTeamNameRaw === "string" &&
-    advancesTeamNameRaw.trim() !== ""
-      ? advancesTeamNameRaw.trim()
-      : null;
+  const knockoutValidation = validateKnockoutWriteValues({
+    stage: match.stage,
+    homeTeamName: match.homeTeamName,
+    awayTeamName: match.awayTeamName,
+    homeScore,
+    awayScore,
+    advancesTeamNameRaw,
+    resolutionMethodRaw,
+  });
+
+  if (knockoutValidation.status === "error") {
+    return {
+      status: "error",
+      message: knockoutValidation.message,
+    };
+  }
 
   const existingResult = await prismaClient.matchResult.findUnique({
     where: { matchId },
@@ -96,7 +111,8 @@ export async function upsertAdminMatchResult({
       data: {
         homeScore,
         awayScore,
-        advancesTeamName,
+        advancesTeamName: knockoutValidation.values.advancesTeamName,
+        resolutionMethod: knockoutValidation.values.resolutionMethod,
         updatedByParticipantId: adminParticipantId,
       },
     });
@@ -106,7 +122,8 @@ export async function upsertAdminMatchResult({
         matchId,
         homeScore,
         awayScore,
-        advancesTeamName,
+        advancesTeamName: knockoutValidation.values.advancesTeamName,
+        resolutionMethod: knockoutValidation.values.resolutionMethod,
         createdByParticipantId: adminParticipantId,
         updatedByParticipantId: adminParticipantId,
       },

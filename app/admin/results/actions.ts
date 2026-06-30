@@ -17,6 +17,7 @@ export async function upsertMatchResultAction(
     homeScoreRaw: formData.get("homeScore"),
     awayScoreRaw: formData.get("awayScore"),
     advancesTeamNameRaw: formData.get("advancesTeamName"),
+    resolutionMethodRaw: formData.get("resolutionMethod"),
   });
 
   if (result.status === "success") {

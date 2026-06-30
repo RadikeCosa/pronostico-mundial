@@ -11,6 +11,11 @@ const mocks = vi.hoisted(() => ({
   getCurrentParticipant: vi.fn(),
   getPrismaClient: vi.fn(),
   isMatchLocked: vi.fn(),
+  validateKnockoutWriteValues: vi.fn(() => ({
+    advancesTeamName: null,
+    resolutionMethod: null,
+    error: null,
+  })),
   revalidatePath: vi.fn(),
 }));
 
@@ -24,6 +29,10 @@ vi.mock("@/lib/prisma", () => ({
 
 vi.mock("@/lib/read-models", () => ({
   isMatchLocked: mocks.isMatchLocked,
+}));
+
+vi.mock("@/lib/knockout-validation", () => ({
+  validateKnockoutWriteValues: mocks.validateKnockoutWriteValues,
 }));
 
 vi.mock("next/cache", () => ({

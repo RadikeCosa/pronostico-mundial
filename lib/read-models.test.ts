@@ -158,8 +158,11 @@ describe("read models", () => {
           exactScore: 3,
           outcome: 0,
           advances: 1,
-          total: 4,
-          reason: "Empate exacto y clasificado acertado en eliminación directa.",
+          method: 0,
+          bonus: 1,
+          total: 5,
+          reason:
+            "Marcador exacto a 90 minutos. Clasificado acertado. Bonus por exacto + clasificado.",
         },
       },
       {
@@ -171,6 +174,8 @@ describe("read models", () => {
           exactScore: 0,
           outcome: 0,
           advances: 0,
+          method: 0,
+          bonus: 0,
           total: 0,
           reason: "No cargó pronóstico.",
         },

@@ -3,6 +3,7 @@ type HistoricalMatchResult = {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES";
 };
 
 type MatchLookup = Map<number, { id: string }>;
@@ -15,6 +16,7 @@ type MatchResultUpsertClient = {
                 homeScore: number;
                 awayScore: number;
                 advancesTeamName: string | null;
+                resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES";
                 updatedByParticipantId: string | null;
             };
             create: {
@@ -22,6 +24,7 @@ type MatchResultUpsertClient = {
                 homeScore: number;
                 awayScore: number;
                 advancesTeamName: string | null;
+                resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES";
                 createdByParticipantId: string | null;
                 updatedByParticipantId: string | null;
             };
@@ -35,24 +38,28 @@ export const HISTORICAL_MATCH_RESULTS: HistoricalMatchResult[] = [
         homeScore: 0,
         awayScore: 1,
         advancesTeamName: "Canada",
+        resolutionMethod: "REGULAR",
     },
     {
         matchNumber: 74,
         homeScore: 2,
         awayScore: 1,
         advancesTeamName: "Brazil",
+        resolutionMethod: "REGULAR",
     },
     {
         matchNumber: 75,
         homeScore: 1,
         awayScore: 1,
         advancesTeamName: "Paraguay",
+        resolutionMethod: "PENALTIES",
     },
     {
         matchNumber: 76,
         homeScore: 1,
         awayScore: 1,
         advancesTeamName: "Morocco",
+        resolutionMethod: "PENALTIES",
     },
 ];
 
@@ -84,6 +91,7 @@ export async function upsertHistoricalMatchResults(args: {
                 homeScore: result.homeScore,
                 awayScore: result.awayScore,
                 advancesTeamName: result.advancesTeamName,
+                resolutionMethod: result.resolutionMethod,
                 updatedByParticipantId: adminParticipantId,
             },
             create: {
@@ -91,6 +99,7 @@ export async function upsertHistoricalMatchResults(args: {
                 homeScore: result.homeScore,
                 awayScore: result.awayScore,
                 advancesTeamName: result.advancesTeamName,
+                resolutionMethod: result.resolutionMethod,
                 createdByParticipantId: adminParticipantId,
                 updatedByParticipantId: adminParticipantId,
             },

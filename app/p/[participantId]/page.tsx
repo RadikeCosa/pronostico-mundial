@@ -515,7 +515,11 @@ export default async function ParticipantPage({
                           : "font-medium text-amber-700"
                       }
                     >
-                      {formatPredictionSummary(match.currentPrediction)}
+                      {formatPredictionSummary(match.currentPrediction, {
+                        stage: match.stage,
+                        homeTeamName: match.homeTeamName,
+                        awayTeamName: match.awayTeamName,
+                      })}
                     </span>
                   </p>
                   {match.city || match.venue ? (

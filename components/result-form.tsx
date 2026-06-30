@@ -17,10 +17,11 @@ type ResultFormProps = {
     homeScore: number | null;
     awayScore: number | null;
     advancesTeamName: string | null;
+    resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   };
   homeTeamName: string;
   awayTeamName: string;
-  showAdvancingTeamField: boolean;
+  isKnockout: boolean;
 };
 
 const initialState: ResultFormState = {
@@ -33,7 +34,7 @@ export function ResultForm({
   defaultValues,
   homeTeamName,
   awayTeamName,
-  showAdvancingTeamField,
+  isKnockout,
 }: ResultFormProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(action, initialState);
@@ -73,16 +74,40 @@ export function ResultForm({
         </label>
       </div>
 
-      {showAdvancingTeamField ? (
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
-          Equipo que clasifica
-          <input
-            name="advancesTeamName"
-            type="text"
-            defaultValue={defaultValues.advancesTeamName ?? ""}
-            className="rounded-2xl border border-black/10 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-black"
-          />
-        </label>
+      {isKnockout ? (
+        <>
+          <p className="text-xs text-zinc-700">
+            Cargá el marcador a los 90 minutos y luego indicá clasificado y
+            método de resolución.
+          </p>
+          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
+            Equipo que clasifica
+            <select
+              name="advancesTeamName"
+              required
+              defaultValue={defaultValues.advancesTeamName ?? ""}
+              className="rounded-2xl border border-black/10 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-black"
+            >
+              <option value="">Seleccionar equipo</option>
+              <option value={homeTeamName}>{homeTeamName}</option>
+              <option value={awayTeamName}>{awayTeamName}</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
+            Método de resolución
+            <select
+              name="resolutionMethod"
+              required
+              defaultValue={defaultValues.resolutionMethod ?? ""}
+              className="rounded-2xl border border-black/10 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-black"
+            >
+              <option value="">Seleccionar método</option>
+              <option value="REGULAR">En 90 minutos</option>
+              <option value="EXTRA_TIME">En alargue</option>
+              <option value="PENALTIES">Por penales</option>
+            </select>
+          </label>
+        </>
       ) : null}
 
       {state.message ? (

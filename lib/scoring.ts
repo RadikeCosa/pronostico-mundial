@@ -2,12 +2,14 @@ export type PredictionInput = {
   homeScore: number;
   awayScore: number;
   advancesTeamName?: string | null;
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
 } | null | undefined;
 
 export type ResultInput = {
   homeScore: number;
   awayScore: number;
   advancesTeamName?: string | null;
+  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
 } | null | undefined;
 
 export type MatchInput = {
@@ -18,6 +20,8 @@ export type ScoreBreakdown = {
   exactScore: number;
   outcome: number;
   advances: number;
+  method: number;
+  bonus: number;
   total: number;
   reason: string;
 };
@@ -51,6 +55,22 @@ function normalizeAdvancesTeamName(teamName?: string | null): string | null {
   return normalizedTeamName ? normalizedTeamName : null;
 }
 
+function normalizeResolutionMethod(
+  resolutionMethod?: string | null,
+): "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null {
+  const normalizedResolutionMethod = resolutionMethod?.trim().toUpperCase();
+
+  if (
+    normalizedResolutionMethod === "REGULAR" ||
+    normalizedResolutionMethod === "EXTRA_TIME" ||
+    normalizedResolutionMethod === "PENALTIES"
+  ) {
+    return normalizedResolutionMethod;
+  }
+
+  return null;
+}
+
 export function calculatePredictionScore(
   prediction: PredictionInput,
   result: ResultInput,
@@ -61,6 +81,8 @@ export function calculatePredictionScore(
       exactScore: 0,
       outcome: 0,
       advances: 0,
+      method: 0,
+      bonus: 0,
       total: 0,
       reason: "No cargó pronóstico.",
     };
@@ -71,6 +93,8 @@ export function calculatePredictionScore(
       exactScore: 0,
       outcome: 0,
       advances: 0,
+      method: 0,
+      bonus: 0,
       total: 0,
       reason: "Todavía no hay resultado cargado.",
     };
@@ -84,6 +108,8 @@ export function calculatePredictionScore(
         exactScore,
         outcome: 0,
         advances: 0,
+        method: 0,
+        bonus: 0,
         total: 3,
         reason: "Resultado exacto en fase de grupos.",
       };
@@ -97,6 +123,8 @@ export function calculatePredictionScore(
       exactScore: 0,
       outcome,
       advances: 0,
+      method: 0,
+      bonus: 0,
       total: outcome,
       reason:
         outcome === 1
@@ -105,54 +133,51 @@ export function calculatePredictionScore(
     };
   }
 
-  if (exactScore !== 3) {
-    const predictedOutcome = getOutcome(prediction.homeScore, prediction.awayScore);
-    const actualOutcome = getOutcome(result.homeScore, result.awayScore);
-    const predictedAdvance = normalizeAdvancesTeamName(prediction.advancesTeamName);
-    const actualAdvance = normalizeAdvancesTeamName(result.advancesTeamName);
-    const advancesOnlyPoint =
-      predictedOutcome === "draw" &&
-      actualOutcome === "draw" &&
-      predictedAdvance !== null &&
-      predictedAdvance === actualAdvance
-        ? 1
-        : 0;
-
-    return {
-      exactScore: 0,
-      outcome: 0,
-      advances: advancesOnlyPoint,
-      total: advancesOnlyPoint,
-      reason:
-        advancesOnlyPoint === 1
-          ? "Empate pronosticado sin resultado exacto, pero con clasificado acertado."
-          : "Sin resultado exacto ni bonus de clasificado.",
-    };
-  }
-
+  const predictedOutcome = getOutcome(prediction.homeScore, prediction.awayScore);
   const actualOutcome = getOutcome(result.homeScore, result.awayScore);
-  if (actualOutcome !== "draw") {
-    return {
-      exactScore,
-      outcome: 0,
-      advances: 0,
-      total: 3,
-      reason: "Resultado exacto en eliminación directa.",
-    };
-  }
-
   const predictedAdvance = normalizeAdvancesTeamName(prediction.advancesTeamName);
   const actualAdvance = normalizeAdvancesTeamName(result.advancesTeamName);
+  const predictedMethod = normalizeResolutionMethod(prediction.resolutionMethod);
+  const actualMethod = normalizeResolutionMethod(result.resolutionMethod);
+
+  const outcome = exactScore === 3 ? 0 : predictedOutcome === actualOutcome ? 1 : 0;
   const advances = predictedAdvance !== null && predictedAdvance === actualAdvance ? 1 : 0;
+  const method =
+    predictedMethod !== null &&
+      actualMethod !== null &&
+      predictedMethod === actualMethod
+      ? 1
+      : 0;
+  const bonus = exactScore === 3 && advances === 1 ? 1 : 0;
+  const total = exactScore + outcome + advances + method + bonus;
+
+  const reasonParts: string[] = [];
+
+  if (exactScore === 3) {
+    reasonParts.push("Marcador exacto a 90 minutos.");
+  } else if (outcome === 1) {
+    reasonParts.push("Signo acertado a 90 minutos.");
+  }
+
+  if (advances === 1) {
+    reasonParts.push("Clasificado acertado.");
+  }
+
+  if (method === 1) {
+    reasonParts.push("Método de resolución acertado.");
+  }
+
+  if (bonus === 1) {
+    reasonParts.push("Bonus por exacto + clasificado.");
+  }
 
   return {
     exactScore,
-    outcome: 0,
+    outcome,
     advances,
-    total: exactScore + advances,
-    reason:
-      advances === 1
-        ? "Empate exacto y clasificado acertado en eliminación directa."
-        : "Empate exacto, pero el clasificado no fue acertado.",
+    method,
+    bonus,
+    total,
+    reason: reasonParts.length > 0 ? reasonParts.join(" ") : "Sin aciertos en eliminación directa.",
   };
 }
