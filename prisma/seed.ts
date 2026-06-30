@@ -4,6 +4,10 @@ import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { MatchStage, Prisma, PrismaClient } from "@prisma/client";
+import {
+  HISTORICAL_MATCH_RESULTS,
+  upsertHistoricalMatchResults,
+} from "./seed-data/historical-results";
 
 const pbkdf2Async = promisify(pbkdf2);
 
@@ -218,10 +222,16 @@ async function main() {
   const participantByName = new Map(
     participants.map((participant) => [participant.name, participant]),
   );
+  const seedAdmin = participantByName.get("Ramiro") ?? null;
+
+  const historicalMatchNumbers = new Set<number>([
+    ...HISTORICAL_PREDICTIONS.map((prediction) => prediction.matchNumber),
+    ...HISTORICAL_MATCH_RESULTS.map((result) => result.matchNumber),
+  ]);
   const matches = await prisma.match.findMany({
     where: {
       matchNumber: {
-        in: HISTORICAL_PREDICTIONS.map((prediction) => prediction.matchNumber),
+        in: [...historicalMatchNumbers],
       },
     },
   });
@@ -259,8 +269,14 @@ async function main() {
     });
   }
 
+  await upsertHistoricalMatchResults({
+    prismaClient: prisma,
+    matchByNumber,
+    adminParticipantId: seedAdmin?.id ?? null,
+  });
+
   console.log(
-    `Seed complete: ${fixture.teams.length} teams, ${fixture.matches.length} matches, ${HISTORICAL_PREDICTIONS.length} predictions.`,
+    `Seed complete: ${fixture.teams.length} teams, ${fixture.matches.length} matches, ${HISTORICAL_PREDICTIONS.length} predictions, ${HISTORICAL_MATCH_RESULTS.length} results.`,
   );
 }
 
