@@ -106,7 +106,7 @@ export default async function AdminResultsPage() {
                         ) : null}
                       </div>
 
-                      {match.isLocked ? (
+                      {match.isLocked && match.teamsDefined !== false ? (
                         <ResultForm
                           action={action}
                           defaultValues={{
@@ -121,6 +121,12 @@ export default async function AdminResultsPage() {
                           awayTeamName={match.awayTeamName}
                           isKnockout={isKnockout}
                         />
+                      ) : match.isLocked ? (
+                        <section className="rounded-4xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+                          Este cruce todavía depende de resultados anteriores. El
+                          resultado se habilitará cuando estén definidos ambos
+                          equipos.
+                        </section>
                       ) : (
                         <section className="rounded-4xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
                           Este partido todavía no empezó. El formulario se

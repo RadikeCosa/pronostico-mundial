@@ -2,6 +2,12 @@ import type { PrismaClient } from "@prisma/client";
 import { calculatePredictionScore, type ScoreBreakdown } from "./scoring";
 import { getPrismaClient } from "./prisma";
 import { formatParticipantName } from "./presentation";
+import {
+  areResolvedMatchTeamsDefined,
+  buildResolvedBracketIndex,
+  type BracketPropagationMatch,
+  type ResolvedBracketMatch,
+} from "./bracket-propagation";
 
 export type ActiveParticipant = {
   id: string;
@@ -25,6 +31,7 @@ export type MatchListItem = {
   venue: string | null;
   city: string | null;
   isLocked: boolean;
+  teamsDefined?: boolean;
 };
 
 export type ParticipantMatchListItem = MatchListItem & {
@@ -115,6 +122,7 @@ export type MatchReadModel = {
     resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   } | null;
   isLocked: boolean;
+  teamsDefined: boolean;
   canRevealPredictions: boolean;
   visiblePredictions: ParticipantPredictionView[];
   result: MatchResultView | null;
@@ -164,6 +172,7 @@ type MatchRecord = {
   kickoffAt: Date;
   venue: string | null;
   city: string | null;
+  teamsDefined?: boolean;
 };
 
 type MatchWithRelationsRecord = MatchRecord & {
@@ -237,6 +246,57 @@ function normalizePrediction(
   };
 }
 
+function toBracketPropagationMatch(
+  match: Pick<
+    MatchRecord,
+    "matchNumber" | "stage" | "homeTeamName" | "awayTeamName"
+  > & {
+    result?: ResultRecord;
+  },
+): BracketPropagationMatch {
+  return {
+    matchNumber: match.matchNumber,
+    stage: match.stage,
+    homeTeamName: match.homeTeamName,
+    awayTeamName: match.awayTeamName,
+    result: match.result
+      ? {
+        homeScore: match.result.homeScore,
+        awayScore: match.result.awayScore,
+        advancesTeamName: match.result.advancesTeamName,
+      }
+      : null,
+  };
+}
+
+function applyEffectiveTeamsToMatch<T extends MatchRecord & { result?: ResultRecord }>(
+  match: T,
+  resolvedByMatchNumber: Map<number, ResolvedBracketMatch>,
+): T {
+  const resolvedMatch = resolvedByMatchNumber.get(match.matchNumber);
+
+  if (!resolvedMatch) {
+    return match;
+  }
+
+  return {
+    ...match,
+    homeTeamName: resolvedMatch.homeSlot.effectiveName,
+    awayTeamName: resolvedMatch.awaySlot.effectiveName,
+    teamsDefined: areResolvedMatchTeamsDefined(resolvedMatch),
+  };
+}
+
+function buildResolvedMatches<T extends MatchRecord & { result?: ResultRecord }>(
+  matches: T[],
+): T[] {
+  const resolvedByMatchNumber = buildResolvedBracketIndex(
+    matches.map((match) => toBracketPropagationMatch(match)),
+  );
+
+  return matches.map((match) => applyEffectiveTeamsToMatch(match, resolvedByMatchNumber));
+}
+
 export function isMatchLocked(kickoffAt: Date, now: Date): boolean {
   return kickoffAt.getTime() <= now.getTime();
 }
@@ -246,10 +306,16 @@ export function getMatchDay(kickoffAt: Date): string {
 }
 
 export function toMatchListItem(match: MatchRecord, now: Date): MatchListItem {
-  return {
+  const matchListItem: MatchListItem = {
     ...match,
     isLocked: isMatchLocked(match.kickoffAt, now),
   };
+
+  if (typeof match.teamsDefined === "boolean") {
+    matchListItem.teamsDefined = match.teamsDefined;
+  }
+
+  return matchListItem;
 }
 
 export function toParticipantMatchListItem(args: {
@@ -505,6 +571,7 @@ export function buildMatchReadModel(args: {
     match: matchListItem,
     currentPrediction: normalizePrediction(currentPrediction),
     isLocked: matchListItem.isLocked,
+    teamsDefined: match.teamsDefined ?? true,
     canRevealPredictions,
     visiblePredictions: buildVisiblePredictions({
       match,
@@ -665,10 +732,19 @@ export async function getMatchesGroupedByDay(
       kickoffAt: true,
       venue: true,
       city: true,
+      result: {
+        select: {
+          homeScore: true,
+          awayScore: true,
+          advancesTeamName: true,
+        },
+      },
     },
   });
 
-  return groupMatchesByDay(matches.map((match) => toMatchListItem(match, now)));
+  return groupMatchesByDay(
+    buildResolvedMatches(matches).map((match) => toMatchListItem(match, now)),
+  );
 }
 
 export async function getMatchesByGroup(
@@ -689,10 +765,17 @@ export async function getMatchesByGroup(
       kickoffAt: true,
       venue: true,
       city: true,
+      result: {
+        select: {
+          homeScore: true,
+          awayScore: true,
+          advancesTeamName: true,
+        },
+      },
     },
   });
 
-  return matches.map((match) => toMatchListItem(match, now));
+  return buildResolvedMatches(matches).map((match) => toMatchListItem(match, now));
 }
 
 export async function getParticipantMatches(
@@ -743,7 +826,7 @@ export async function getParticipantMatches(
     },
   });
 
-  return matches.map((match) =>
+  return buildResolvedMatches(matches).map((match) =>
     toParticipantMatchListItem({
       match,
       participantId,
@@ -758,7 +841,7 @@ export async function getMatchReadModelById(
   now: Date = new Date(),
   prismaClient: PrismaClient = getPrismaClient(),
 ): Promise<MatchReadModel | null> {
-  const [participants, match] = await Promise.all([
+  const [participants, match, bracketMatches] = await Promise.all([
     prismaClient.participant.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -798,6 +881,21 @@ export async function getMatchReadModelById(
         },
       },
     }),
+    prismaClient.match.findMany({
+      select: {
+        matchNumber: true,
+        stage: true,
+        homeTeamName: true,
+        awayTeamName: true,
+        result: {
+          select: {
+            homeScore: true,
+            awayScore: true,
+            advancesTeamName: true,
+          },
+        },
+      },
+    }),
   ]);
 
   if (!match) {
@@ -811,8 +909,16 @@ export async function getMatchReadModelById(
     throw new Error(`Active participant not found: ${currentParticipantId}`);
   }
 
+  const resolvedByMatchNumber = buildResolvedBracketIndex(
+    bracketMatches.map((bracketMatch) => toBracketPropagationMatch(bracketMatch)),
+  );
+  const resolvedMatch = applyEffectiveTeamsToMatch(
+    match as MatchWithRelationsRecord,
+    resolvedByMatchNumber,
+  );
+
   return buildMatchReadModel({
-    match,
+    match: resolvedMatch,
     participants,
     currentParticipantName: currentParticipant.name,
     now,
@@ -909,7 +1015,7 @@ export async function getAdminResultsGroupedByDay(
     },
   });
 
-  const adminMatches: AdminResultMatchListItem[] = matches.map((match) => ({
+  const adminMatches: AdminResultMatchListItem[] = buildResolvedMatches(matches).map((match) => ({
     ...toMatchListItem(match, now),
     result: normalizeMatchResult(match.result),
   }));

@@ -6,6 +6,8 @@ import {
   buildTournamentGoalStats,
   getAdminResultsGroupedByDay,
   getMatchDay,
+  getMatchReadModelById,
+  getParticipantMatches,
   getStandingsStats,
   getTournamentGoalStats,
   groupMatchesByDay,
@@ -619,6 +621,188 @@ describe("read models", () => {
       awayScore: 1,
       createdByParticipantName: "Ramiro",
       updatedByParticipantName: "Pedro",
+    });
+  });
+
+  it("resolves effective knockout teams in the participant matches list", async () => {
+    const participantMatches = await getParticipantMatches(
+      "ramiro",
+      new Date("2026-07-04T12:00:00.000Z"),
+      {
+        match: {
+          findMany: async () => [
+            {
+              id: "m-73",
+              matchNumber: 73,
+              stage: "ROUND_OF_32",
+              groupName: null,
+              homeTeamName: "South Africa",
+              awayTeamName: "Canada",
+              kickoffAt: new Date("2026-06-28T19:00:00.000Z"),
+              venue: null,
+              city: null,
+              predictions: [],
+              result: {
+                homeScore: 0,
+                awayScore: 1,
+                advancesTeamName: "Canada",
+                resolutionMethod: "REGULAR",
+                createdByParticipant: null,
+                updatedByParticipant: null,
+              },
+            },
+            {
+              id: "m-76",
+              matchNumber: 76,
+              stage: "ROUND_OF_32",
+              groupName: null,
+              homeTeamName: "Netherlands",
+              awayTeamName: "Morocco",
+              kickoffAt: new Date("2026-06-30T01:00:00.000Z"),
+              venue: null,
+              city: null,
+              predictions: [],
+              result: {
+                homeScore: 1,
+                awayScore: 1,
+                advancesTeamName: "Morocco",
+                resolutionMethod: "PENALTIES",
+                createdByParticipant: null,
+                updatedByParticipant: null,
+              },
+            },
+            {
+              id: "m-89",
+              matchNumber: 89,
+              stage: "ROUND_OF_16",
+              groupName: null,
+              homeTeamName: "Canada",
+              awayTeamName: "Morocco",
+              kickoffAt: new Date("2026-07-04T17:00:00.000Z"),
+              venue: null,
+              city: null,
+              predictions: [],
+              result: null,
+            },
+            {
+              id: "m-90",
+              matchNumber: 90,
+              stage: "ROUND_OF_16",
+              groupName: null,
+              homeTeamName: "Paraguay",
+              awayTeamName: "W-32-5",
+              kickoffAt: new Date("2026-07-04T21:00:00.000Z"),
+              venue: null,
+              city: null,
+              predictions: [],
+              result: null,
+            },
+            {
+              id: "m-91",
+              matchNumber: 91,
+              stage: "ROUND_OF_16",
+              groupName: null,
+              homeTeamName: "Brazil",
+              awayTeamName: "W-32-6",
+              kickoffAt: new Date("2026-07-05T20:00:00.000Z"),
+              venue: null,
+              city: null,
+              predictions: [],
+              result: null,
+            },
+          ],
+        },
+      } as never,
+    );
+
+    const match89 = participantMatches.find((match) => match.matchNumber === 89);
+    const match90 = participantMatches.find((match) => match.matchNumber === 90);
+    const match91 = participantMatches.find((match) => match.matchNumber === 91);
+
+    expect(match89).toMatchObject({
+      homeTeamName: "Canada",
+      awayTeamName: "Morocco",
+      teamsDefined: true,
+    });
+    expect(match90).toMatchObject({
+      homeTeamName: "Paraguay",
+      awayTeamName: "W-32-5",
+      teamsDefined: false,
+    });
+    expect(match91).toMatchObject({
+      homeTeamName: "Brazil",
+      awayTeamName: "W-32-6",
+      teamsDefined: false,
+    });
+  });
+
+  it("resolves effective teams in the match detail read model", async () => {
+    const matchReadModel = await getMatchReadModelById(
+      "m-89",
+      "ramiro",
+      new Date("2026-07-04T12:00:00.000Z"),
+      {
+        participant: {
+          findMany: async () => [
+            { id: "ramiro", name: "Ramiro" },
+            { id: "pedro", name: "Pedro" },
+          ],
+        },
+        match: {
+          findUnique: async () => ({
+            id: "m-89",
+            matchNumber: 89,
+            stage: "ROUND_OF_16",
+            groupName: null,
+            homeTeamName: "Canada",
+            awayTeamName: "Morocco",
+            kickoffAt: new Date("2026-07-04T17:00:00.000Z"),
+            venue: null,
+            city: null,
+            predictions: [],
+            result: null,
+          }),
+          findMany: async () => [
+            {
+              matchNumber: 73,
+              stage: "ROUND_OF_32",
+              homeTeamName: "South Africa",
+              awayTeamName: "Canada",
+              result: {
+                homeScore: 0,
+                awayScore: 1,
+                advancesTeamName: "Canada",
+              },
+            },
+            {
+              matchNumber: 76,
+              stage: "ROUND_OF_32",
+              homeTeamName: "Netherlands",
+              awayTeamName: "Morocco",
+              result: {
+                homeScore: 1,
+                awayScore: 1,
+                advancesTeamName: "Morocco",
+              },
+            },
+            {
+              matchNumber: 89,
+              stage: "ROUND_OF_16",
+              homeTeamName: "Canada",
+              awayTeamName: "Morocco",
+              result: null,
+            },
+          ],
+        },
+      } as never,
+    );
+
+    expect(matchReadModel).toMatchObject({
+      match: {
+        homeTeamName: "Canada",
+        awayTeamName: "Morocco",
+      },
+      teamsDefined: true,
     });
   });
 });

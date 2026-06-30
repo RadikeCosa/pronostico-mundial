@@ -101,7 +101,7 @@ export default async function MatchDetailPage({
             </p>
           </section>
 
-          {!matchReadModel.isLocked ? (
+          {!matchReadModel.isLocked && matchReadModel.teamsDefined ? (
             <PredictionForm
               action={action}
               defaultValues={{
@@ -116,6 +116,11 @@ export default async function MatchDetailPage({
               awayTeamName={matchReadModel.match.awayTeamName}
               isKnockout={isKnockout}
             />
+          ) : !matchReadModel.isLocked ? (
+            <section className="rounded-4xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+              Este cruce todavía depende de resultados anteriores. El pronóstico
+              se habilitará cuando estén definidos ambos equipos.
+            </section>
           ) : (
             <section className="rounded-4xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
               El partido ya empezó. El pronóstico quedó bloqueado y no se puede

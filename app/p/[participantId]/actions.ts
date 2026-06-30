@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentParticipant } from "@/lib/auth/session";
 import { getPrismaClient } from "@/lib/prisma";
+import {
+  areResolvedMatchTeamsDefined,
+  buildResolvedBracketIndex,
+  type BracketPropagationMatch,
+} from "@/lib/bracket-propagation";
 import { validateKnockoutWriteValues } from "@/lib/knockout-validation";
 import { isMatchLocked } from "@/lib/read-models";
 import type { PredictionFormState } from "@/components/prediction-form";
@@ -17,6 +22,26 @@ function parseScore(rawValue: FormDataEntryValue | null): number | null {
   }
 
   return Number.parseInt(rawValue, 10);
+}
+
+function toBracketPropagationMatch(match: {
+  matchNumber: number;
+  stage: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  result: {
+    homeScore: number;
+    awayScore: number;
+    advancesTeamName: string | null;
+  } | null;
+}): BracketPropagationMatch {
+  return {
+    matchNumber: match.matchNumber,
+    stage: match.stage,
+    homeTeamName: match.homeTeamName,
+    awayTeamName: match.awayTeamName,
+    result: match.result,
+  };
 }
 
 export async function upsertPredictionAction(
@@ -58,6 +83,7 @@ export async function upsertPredictionAction(
     where: { id: matchId },
     select: {
       id: true,
+      matchNumber: true,
       stage: true,
       homeTeamName: true,
       awayTeamName: true,
@@ -79,6 +105,41 @@ export async function upsertPredictionAction(
     };
   }
 
+  const bracketMatches = await prisma.match.findMany({
+    select: {
+      matchNumber: true,
+      stage: true,
+      homeTeamName: true,
+      awayTeamName: true,
+      result: {
+        select: {
+          homeScore: true,
+          awayScore: true,
+          advancesTeamName: true,
+        },
+      },
+    },
+  });
+  const resolvedByMatchNumber = buildResolvedBracketIndex(
+    bracketMatches.map((bracketMatch) => toBracketPropagationMatch(bracketMatch)),
+  );
+  const resolvedMatch = resolvedByMatchNumber.get(match.matchNumber);
+
+  if (!resolvedMatch) {
+    return {
+      status: "error",
+      message: "Partido no encontrado.",
+    };
+  }
+
+  if (match.stage !== "GROUP" && !areResolvedMatchTeamsDefined(resolvedMatch)) {
+    return {
+      status: "error",
+      message:
+        "Este cruce todavía depende de resultados anteriores. El pronóstico se habilitará cuando estén definidos ambos equipos.",
+    };
+  }
+
   const homeScore = parseScore(formData.get("homeScore"));
   const awayScore = parseScore(formData.get("awayScore"));
 
@@ -94,8 +155,8 @@ export async function upsertPredictionAction(
 
   const knockoutValidation = validateKnockoutWriteValues({
     stage: match.stage,
-    homeTeamName: match.homeTeamName,
-    awayTeamName: match.awayTeamName,
+    homeTeamName: resolvedMatch.homeSlot.effectiveName,
+    awayTeamName: resolvedMatch.awaySlot.effectiveName,
     homeScore,
     awayScore,
     advancesTeamNameRaw,
