@@ -35,40 +35,53 @@ export type ResolvedBracketMatch = {
   awaySlot: ResolvedBracketSlot;
 };
 
-const BRACKET_PROPAGATION_RULES: readonly BracketPropagationRule[] = [
-  { sourceMatchNumber: 73, targetMatchNumber: 89, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 76, targetMatchNumber: 89, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 75, targetMatchNumber: 90, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 78, targetMatchNumber: 90, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 74, targetMatchNumber: 91, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 77, targetMatchNumber: 91, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 79, targetMatchNumber: 92, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 80, targetMatchNumber: 92, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 83, targetMatchNumber: 93, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 84, targetMatchNumber: 93, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 81, targetMatchNumber: 94, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 82, targetMatchNumber: 94, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 86, targetMatchNumber: 95, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 88, targetMatchNumber: 95, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 85, targetMatchNumber: 96, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 87, targetMatchNumber: 96, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 89, targetMatchNumber: 97, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 90, targetMatchNumber: 97, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 91, targetMatchNumber: 98, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 92, targetMatchNumber: 98, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 93, targetMatchNumber: 99, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 94, targetMatchNumber: 99, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 95, targetMatchNumber: 100, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 96, targetMatchNumber: 100, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 97, targetMatchNumber: 101, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 98, targetMatchNumber: 101, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 99, targetMatchNumber: 102, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 100, targetMatchNumber: 102, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 101, targetMatchNumber: 104, targetSlot: "home", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 102, targetMatchNumber: 104, targetSlot: "away", sourceOutcome: "WINNER" },
-  { sourceMatchNumber: 101, targetMatchNumber: 103, targetSlot: "home", sourceOutcome: "LOSER" },
-  { sourceMatchNumber: 102, targetMatchNumber: 103, targetSlot: "away", sourceOutcome: "LOSER" },
+export type BracketTopologySource = {
+  matchNumber: number;
+  outcome: BracketSourceOutcome;
+};
+
+export type BracketTopologyMatch = {
+  matchNumber: number;
+  home: BracketTopologySource;
+  away: BracketTopologySource;
+};
+
+// Official FIFA World Cup 2026 knockout topology. This is the only executable
+// source of truth for every derived slot from the Round of 16 to the final.
+export const KNOCKOUT_BRACKET_TOPOLOGY: readonly BracketTopologyMatch[] = [
+  { matchNumber: 89, home: { matchNumber: 74, outcome: "WINNER" }, away: { matchNumber: 77, outcome: "WINNER" } },
+  { matchNumber: 90, home: { matchNumber: 73, outcome: "WINNER" }, away: { matchNumber: 75, outcome: "WINNER" } },
+  { matchNumber: 91, home: { matchNumber: 76, outcome: "WINNER" }, away: { matchNumber: 78, outcome: "WINNER" } },
+  { matchNumber: 92, home: { matchNumber: 79, outcome: "WINNER" }, away: { matchNumber: 80, outcome: "WINNER" } },
+  { matchNumber: 93, home: { matchNumber: 83, outcome: "WINNER" }, away: { matchNumber: 84, outcome: "WINNER" } },
+  { matchNumber: 94, home: { matchNumber: 81, outcome: "WINNER" }, away: { matchNumber: 82, outcome: "WINNER" } },
+  { matchNumber: 95, home: { matchNumber: 86, outcome: "WINNER" }, away: { matchNumber: 88, outcome: "WINNER" } },
+  { matchNumber: 96, home: { matchNumber: 85, outcome: "WINNER" }, away: { matchNumber: 87, outcome: "WINNER" } },
+  { matchNumber: 97, home: { matchNumber: 89, outcome: "WINNER" }, away: { matchNumber: 90, outcome: "WINNER" } },
+  { matchNumber: 98, home: { matchNumber: 93, outcome: "WINNER" }, away: { matchNumber: 94, outcome: "WINNER" } },
+  { matchNumber: 99, home: { matchNumber: 91, outcome: "WINNER" }, away: { matchNumber: 92, outcome: "WINNER" } },
+  { matchNumber: 100, home: { matchNumber: 95, outcome: "WINNER" }, away: { matchNumber: 96, outcome: "WINNER" } },
+  { matchNumber: 101, home: { matchNumber: 97, outcome: "WINNER" }, away: { matchNumber: 98, outcome: "WINNER" } },
+  { matchNumber: 102, home: { matchNumber: 99, outcome: "WINNER" }, away: { matchNumber: 100, outcome: "WINNER" } },
+  { matchNumber: 103, home: { matchNumber: 101, outcome: "LOSER" }, away: { matchNumber: 102, outcome: "LOSER" } },
+  { matchNumber: 104, home: { matchNumber: 101, outcome: "WINNER" }, away: { matchNumber: 102, outcome: "WINNER" } },
 ] as const;
+
+const BRACKET_PROPAGATION_RULES: readonly BracketPropagationRule[] =
+  KNOCKOUT_BRACKET_TOPOLOGY.flatMap((match) => ([
+    {
+      sourceMatchNumber: match.home.matchNumber,
+      targetMatchNumber: match.matchNumber,
+      targetSlot: "home" as const,
+      sourceOutcome: match.home.outcome,
+    },
+    {
+      sourceMatchNumber: match.away.matchNumber,
+      targetMatchNumber: match.matchNumber,
+      targetSlot: "away" as const,
+      sourceOutcome: match.away.outcome,
+    },
+  ]));
 
 const propagationRuleByTarget = new Map<string, BracketPropagationRule>(
   BRACKET_PROPAGATION_RULES.map((rule) => [
@@ -100,7 +113,7 @@ function normalizeTeamName(name: string | null | undefined): string | null {
 }
 
 function isPlaceholderName(name: string): boolean {
-  return /^W-\d+-\d+$/i.test(name) || /^TBD$/i.test(name.trim());
+  return /^(?:W|L)-\d+(?:-\d+)?$/i.test(name.trim()) || /^TBD$/i.test(name.trim());
 }
 
 function isConcreteTeamName(name: string | null): name is string {
@@ -129,7 +142,7 @@ function createUnresolvedDerivedSlot(args: {
     sourceMatchNumber: args.sourceMatchNumber,
     sourceOutcome: args.sourceOutcome,
     isResolvedFromResult: false,
-    effectiveName: args.originalLabel,
+    effectiveName: "TBD",
   };
 }
 
@@ -164,10 +177,18 @@ export function buildResolvedBracketIndex(
     const sourceHomeName = resolvedSourceMatch.homeSlot.effectiveName;
     const sourceAwayName = resolvedSourceMatch.awaySlot.effectiveName;
 
+    const scoreWinnerName = sourceMatch.result &&
+      sourceMatch.result.homeScore !== sourceMatch.result.awayScore
+      ? sourceMatch.result.homeScore > sourceMatch.result.awayScore
+        ? sourceHomeName
+        : sourceAwayName
+      : null;
+
     if (
       normalizedAdvancesTeamName === null ||
       (normalizedAdvancesTeamName !== sourceHomeName &&
-        normalizedAdvancesTeamName !== sourceAwayName)
+        normalizedAdvancesTeamName !== sourceAwayName) ||
+      (scoreWinnerName !== null && normalizedAdvancesTeamName !== scoreWinnerName)
     ) {
       return createUnresolvedDerivedSlot({
         originalLabel,

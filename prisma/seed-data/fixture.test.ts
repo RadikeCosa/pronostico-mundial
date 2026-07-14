@@ -31,21 +31,21 @@ describe("knockout fixture data", () => {
         const fixture = loadFixture();
         const expectedRoundOf32 = new Map<number, [string, string]>([
             [73, ["South Africa", "Canada"]],
-            [74, ["Brazil", "Japan"]],
-            [75, ["Germany", "Paraguay"]],
-            [76, ["Netherlands", "Morocco"]],
-            [77, ["Ivory Coast", "Norway"]],
-            [78, ["France", "Sweden"]],
+            [74, ["Germany", "Paraguay"]],
+            [75, ["Netherlands", "Morocco"]],
+            [76, ["Brazil", "Japan"]],
+            [77, ["France", "Sweden"]],
+            [78, ["Ivory Coast", "Norway"]],
             [79, ["Mexico", "Ecuador"]],
             [80, ["England", "DR Congo"]],
-            [81, ["Belgium", "Senegal"]],
-            [82, ["United States", "Bosnia and Herzegovina"]],
-            [83, ["Spain", "Austria"]],
-            [84, ["Portugal", "Croatia"]],
+            [81, ["United States", "Bosnia and Herzegovina"]],
+            [82, ["Belgium", "Senegal"]],
+            [83, ["Portugal", "Croatia"]],
+            [84, ["Spain", "Austria"]],
             [85, ["Switzerland", "Algeria"]],
-            [86, ["Australia", "Egypt"]],
-            [87, ["Argentina", "Cape Verde"]],
-            [88, ["Colombia", "Ghana"]],
+            [86, ["Argentina", "Cape Verde"]],
+            [87, ["Colombia", "Ghana"]],
+            [88, ["Australia", "Egypt"]],
         ]);
 
         const roundOf32 = fixture.matches.filter(
@@ -64,50 +64,22 @@ describe("knockout fixture data", () => {
         }
     });
 
-    it("updates Round of 16 with winners and keeps unresolved rivals as labels", () => {
+    it("keeps every derived knockout slot as a placeholder in fixture data", () => {
         const fixture = loadFixture();
-        const matchByNumber = new Map(
-            fixture.matches.map((match) => [match.matchNumber, match]),
-        );
+        const derivedMatches = fixture.matches.filter((match) => match.matchNumber >= 89);
 
-        expect(matchByNumber.get(89)).toMatchObject({
-            stage: "Round of 16",
-            homeTeam: "Canada",
-            awayTeam: "Morocco",
-            kickoffAt: "2026-07-04T13:00:00-04:00",
-        });
-        expect(matchByNumber.get(90)).toMatchObject({
-            stage: "Round of 16",
-            homeTeam: "Paraguay",
-            awayTeam: "W-32-5",
+        expect(derivedMatches).toHaveLength(16);
+        for (const match of derivedMatches) {
+            expect([match.homeTeam, match.awayTeam]).toEqual(["TBD", "TBD"]);
+        }
+
+        expect(derivedMatches.find((match) => match.matchNumber === 89)).toMatchObject({
             kickoffAt: "2026-07-04T17:00:00-04:00",
+            city: "Philadelphia",
         });
-        expect(matchByNumber.get(91)).toMatchObject({
-            stage: "Round of 16",
-            homeTeam: "Brazil",
-            awayTeam: "W-32-6",
-            kickoffAt: "2026-07-05T16:00:00-04:00",
-        });
-
-        expect(matchByNumber.get(92)).toMatchObject({
-            homeTeam: "W-32-7",
-            awayTeam: "W-32-8",
-        });
-        expect(matchByNumber.get(93)).toMatchObject({
-            homeTeam: "W-32-11",
-            awayTeam: "W-32-12",
-        });
-        expect(matchByNumber.get(94)).toMatchObject({
-            homeTeam: "W-32-9",
-            awayTeam: "W-32-10",
-        });
-        expect(matchByNumber.get(95)).toMatchObject({
-            homeTeam: "W-32-14",
-            awayTeam: "W-32-16",
-        });
-        expect(matchByNumber.get(96)).toMatchObject({
-            homeTeam: "W-32-13",
-            awayTeam: "W-32-15",
+        expect(derivedMatches.find((match) => match.matchNumber === 90)).toMatchObject({
+            kickoffAt: "2026-07-04T13:00:00-04:00",
+            city: "Houston",
         });
     });
 });

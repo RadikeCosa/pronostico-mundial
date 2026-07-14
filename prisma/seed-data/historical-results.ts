@@ -42,24 +42,24 @@ export const HISTORICAL_MATCH_RESULTS: HistoricalMatchResult[] = [
     },
     {
         matchNumber: 74,
-        homeScore: 2,
-        awayScore: 1,
-        advancesTeamName: "Brazil",
-        resolutionMethod: "REGULAR",
-    },
-    {
-        matchNumber: 75,
         homeScore: 1,
         awayScore: 1,
         advancesTeamName: "Paraguay",
         resolutionMethod: "PENALTIES",
     },
     {
-        matchNumber: 76,
+        matchNumber: 75,
         homeScore: 1,
         awayScore: 1,
         advancesTeamName: "Morocco",
         resolutionMethod: "PENALTIES",
+    },
+    {
+        matchNumber: 76,
+        homeScore: 2,
+        awayScore: 1,
+        advancesTeamName: "Brazil",
+        resolutionMethod: "REGULAR",
     },
 ];
 

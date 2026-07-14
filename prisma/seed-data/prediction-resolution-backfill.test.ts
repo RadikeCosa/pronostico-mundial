@@ -26,8 +26,8 @@ describe("legacy knockout prediction resolution method backfill", () => {
                         advancesTeamName: "South Africa",
                         match: {
                             matchNumber: 74,
-                            homeTeamName: "Brazil",
-                            awayTeamName: "Japan",
+                            homeTeamName: "Germany",
+                            awayTeamName: "Paraguay",
                         },
                     },
                     {
@@ -37,8 +37,8 @@ describe("legacy knockout prediction resolution method backfill", () => {
                         advancesTeamName: "Paraguay",
                         match: {
                             matchNumber: 75,
-                            homeTeamName: "Germany",
-                            awayTeamName: "Paraguay",
+                            homeTeamName: "Netherlands",
+                            awayTeamName: "Morocco",
                         },
                     },
                 ],
@@ -64,7 +64,7 @@ describe("legacy knockout prediction resolution method backfill", () => {
                     predictionId: "p-2",
                     matchNumber: 74,
                     predictedAdvancesTeamName: "South Africa",
-                    expectedWinnerTeamName: "Brazil",
+                    expectedWinnerTeamName: "Germany",
                 },
             ],
         });

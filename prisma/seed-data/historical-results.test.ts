@@ -62,24 +62,24 @@ describe("historical knockout result seed", () => {
             },
             {
                 matchId: "m-74",
-                homeScore: 2,
-                awayScore: 1,
-                advancesTeamName: "Brazil",
-                resolutionMethod: "REGULAR",
-            },
-            {
-                matchId: "m-75",
                 homeScore: 1,
                 awayScore: 1,
                 advancesTeamName: "Paraguay",
                 resolutionMethod: "PENALTIES",
             },
             {
-                matchId: "m-76",
+                matchId: "m-75",
                 homeScore: 1,
                 awayScore: 1,
                 advancesTeamName: "Morocco",
                 resolutionMethod: "PENALTIES",
+            },
+            {
+                matchId: "m-76",
+                homeScore: 2,
+                awayScore: 1,
+                advancesTeamName: "Brazil",
+                resolutionMethod: "REGULAR",
             },
         ]);
 

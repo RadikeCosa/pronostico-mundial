@@ -114,7 +114,7 @@ describe("read models", () => {
     const readModel = buildMatchReadModel({
       match: {
         id: "m1",
-        matchNumber: 89,
+        matchNumber: 97,
         stage: "QUARTERFINAL",
         groupName: null,
         homeTeamName: "Argentina",
@@ -652,8 +652,8 @@ describe("read models", () => {
               },
             },
             {
-              id: "m-76",
-              matchNumber: 76,
+              id: "m-75",
+              matchNumber: 75,
               stage: "ROUND_OF_32",
               groupName: null,
               homeTeamName: "Netherlands",
@@ -676,8 +676,8 @@ describe("read models", () => {
               matchNumber: 89,
               stage: "ROUND_OF_16",
               groupName: null,
-              homeTeamName: "Canada",
-              awayTeamName: "Morocco",
+              homeTeamName: "TBD",
+              awayTeamName: "TBD",
               kickoffAt: new Date("2026-07-04T17:00:00.000Z"),
               venue: null,
               city: null,
@@ -689,8 +689,8 @@ describe("read models", () => {
               matchNumber: 90,
               stage: "ROUND_OF_16",
               groupName: null,
-              homeTeamName: "Paraguay",
-              awayTeamName: "W-32-5",
+              homeTeamName: "TBD",
+              awayTeamName: "TBD",
               kickoffAt: new Date("2026-07-04T21:00:00.000Z"),
               venue: null,
               city: null,
@@ -702,8 +702,8 @@ describe("read models", () => {
               matchNumber: 91,
               stage: "ROUND_OF_16",
               groupName: null,
-              homeTeamName: "Brazil",
-              awayTeamName: "W-32-6",
+              homeTeamName: "TBD",
+              awayTeamName: "TBD",
               kickoffAt: new Date("2026-07-05T20:00:00.000Z"),
               venue: null,
               city: null,
@@ -720,25 +720,25 @@ describe("read models", () => {
     const match91 = participantMatches.find((match) => match.matchNumber === 91);
 
     expect(match89).toMatchObject({
+      homeTeamName: "TBD",
+      awayTeamName: "TBD",
+      teamsDefined: false,
+    });
+    expect(match90).toMatchObject({
       homeTeamName: "Canada",
       awayTeamName: "Morocco",
       teamsDefined: true,
     });
-    expect(match90).toMatchObject({
-      homeTeamName: "Paraguay",
-      awayTeamName: "W-32-5",
-      teamsDefined: false,
-    });
     expect(match91).toMatchObject({
-      homeTeamName: "Brazil",
-      awayTeamName: "W-32-6",
+      homeTeamName: "TBD",
+      awayTeamName: "TBD",
       teamsDefined: false,
     });
   });
 
   it("resolves effective teams in the match detail read model", async () => {
     const matchReadModel = await getMatchReadModelById(
-      "m-89",
+      "m-90",
       "ramiro",
       new Date("2026-07-04T12:00:00.000Z"),
       {
@@ -750,12 +750,12 @@ describe("read models", () => {
         },
         match: {
           findUnique: async () => ({
-            id: "m-89",
-            matchNumber: 89,
+            id: "m-90",
+            matchNumber: 90,
             stage: "ROUND_OF_16",
             groupName: null,
-            homeTeamName: "Canada",
-            awayTeamName: "Morocco",
+            homeTeamName: "TBD",
+            awayTeamName: "TBD",
             kickoffAt: new Date("2026-07-04T17:00:00.000Z"),
             venue: null,
             city: null,
@@ -775,7 +775,7 @@ describe("read models", () => {
               },
             },
             {
-              matchNumber: 76,
+              matchNumber: 75,
               stage: "ROUND_OF_32",
               homeTeamName: "Netherlands",
               awayTeamName: "Morocco",
@@ -786,10 +786,10 @@ describe("read models", () => {
               },
             },
             {
-              matchNumber: 89,
+              matchNumber: 90,
               stage: "ROUND_OF_16",
-              homeTeamName: "Canada",
-              awayTeamName: "Morocco",
+              homeTeamName: "TBD",
+              awayTeamName: "TBD",
               result: null,
             },
           ],

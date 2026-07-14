@@ -1,351 +1,246 @@
 import { describe, expect, it } from "vitest";
 import {
+  KNOCKOUT_BRACKET_TOPOLOGY,
   areResolvedMatchTeamsDefined,
   buildResolvedBracketIndex,
   getDescendantMatchNumbers,
   type BracketPropagationMatch,
 } from "./bracket-propagation";
 
-function createMatches(
-  overrides: Array<Partial<BracketPropagationMatch> & { matchNumber: number }> = [],
-): BracketPropagationMatch[] {
-  const baseMatches: BracketPropagationMatch[] = [
-    {
-      matchNumber: 73,
-      stage: "ROUND_OF_32",
-      homeTeamName: "South Africa",
-      awayTeamName: "Canada",
-      result: null,
-    },
-    {
-      matchNumber: 74,
-      stage: "ROUND_OF_32",
-      homeTeamName: "Brazil",
-      awayTeamName: "Japan",
-      result: null,
-    },
-    {
-      matchNumber: 75,
-      stage: "ROUND_OF_32",
-      homeTeamName: "Germany",
-      awayTeamName: "Paraguay",
-      result: null,
-    },
-    {
-      matchNumber: 76,
-      stage: "ROUND_OF_32",
-      homeTeamName: "Netherlands",
-      awayTeamName: "Morocco",
-      result: null,
-    },
-    {
-      matchNumber: 77,
-      stage: "ROUND_OF_32",
-      homeTeamName: "Ivory Coast",
-      awayTeamName: "Norway",
-      result: null,
-    },
-    {
-      matchNumber: 78,
-      stage: "ROUND_OF_32",
-      homeTeamName: "France",
-      awayTeamName: "Sweden",
-      result: null,
-    },
-    {
-      matchNumber: 89,
-      stage: "ROUND_OF_16",
-      homeTeamName: "Canada",
-      awayTeamName: "Morocco",
-      result: null,
-    },
-    {
-      matchNumber: 90,
-      stage: "ROUND_OF_16",
-      homeTeamName: "Paraguay",
-      awayTeamName: "W-32-5",
-      result: null,
-    },
-    {
-      matchNumber: 91,
-      stage: "ROUND_OF_16",
-      homeTeamName: "Brazil",
-      awayTeamName: "W-32-6",
-      result: null,
-    },
-    {
-      matchNumber: 97,
-      stage: "QUARTERFINAL",
-      homeTeamName: "TBD",
-      awayTeamName: "TBD",
-      result: null,
-    },
-    {
-      matchNumber: 98,
-      stage: "QUARTERFINAL",
-      homeTeamName: "TBD",
-      awayTeamName: "TBD",
-      result: null,
-    },
-    {
-      matchNumber: 101,
-      stage: "SEMIFINAL",
-      homeTeamName: "TBD",
-      awayTeamName: "TBD",
-      result: null,
-    },
-    {
-      matchNumber: 102,
-      stage: "SEMIFINAL",
-      homeTeamName: "TBD",
-      awayTeamName: "TBD",
-      result: null,
-    },
-    {
-      matchNumber: 103,
-      stage: "THIRD_PLACE",
-      homeTeamName: "TBD",
-      awayTeamName: "TBD",
-      result: null,
-    },
-    {
-      matchNumber: 104,
-      stage: "FINAL",
-      homeTeamName: "TBD",
-      awayTeamName: "TBD",
-      result: null,
-    },
-  ];
+const ROUND_OF_32_TEAMS = new Map<number, [string, string]>([
+  [73, ["South Africa", "Canada"]],
+  [74, ["Germany", "Paraguay"]],
+  [75, ["Netherlands", "Morocco"]],
+  [76, ["Brazil", "Japan"]],
+  [77, ["France", "Sweden"]],
+  [78, ["Ivory Coast", "Norway"]],
+  [79, ["Mexico", "Ecuador"]],
+  [80, ["England", "DR Congo"]],
+  [81, ["United States", "Bosnia and Herzegovina"]],
+  [82, ["Belgium", "Senegal"]],
+  [83, ["Portugal", "Croatia"]],
+  [84, ["Spain", "Austria"]],
+  [85, ["Switzerland", "Algeria"]],
+  [86, ["Argentina", "Cape Verde"]],
+  [87, ["Colombia", "Ghana"]],
+  [88, ["Australia", "Egypt"]],
+]);
 
-  const overrideByMatchNumber = new Map(
-    overrides.map((override) => [override.matchNumber, override]),
-  );
+function createBracketMatches(resultMatchNumbers: number[] = []): BracketPropagationMatch[] {
+  const resultMatchNumberSet = new Set(resultMatchNumbers);
+  const matches: BracketPropagationMatch[] = [];
 
-  return baseMatches.map((match) => ({
-    ...match,
-    ...overrideByMatchNumber.get(match.matchNumber),
-  }));
+  for (let matchNumber = 73; matchNumber <= 88; matchNumber += 1) {
+    const [homeTeamName, awayTeamName] = ROUND_OF_32_TEAMS.get(matchNumber)!;
+    matches.push({
+      matchNumber,
+      stage: "ROUND_OF_32",
+      homeTeamName,
+      awayTeamName,
+      result: resultMatchNumberSet.has(matchNumber)
+        ? { homeScore: 1, awayScore: 0, advancesTeamName: homeTeamName }
+        : null,
+    });
+  }
+
+  for (const topologyMatch of KNOCKOUT_BRACKET_TOPOLOGY) {
+    matches.push({
+      matchNumber: topologyMatch.matchNumber,
+      stage: topologyMatch.matchNumber <= 96
+        ? "ROUND_OF_16"
+        : topologyMatch.matchNumber <= 100
+          ? "QUARTERFINAL"
+          : topologyMatch.matchNumber <= 102
+            ? "SEMIFINAL"
+            : topologyMatch.matchNumber === 103
+              ? "THIRD_PLACE"
+              : "FINAL",
+      homeTeamName: "TBD",
+      awayTeamName: "TBD",
+      result: null,
+    });
+  }
+
+  if (resultMatchNumbers.some((matchNumber) => matchNumber >= 89)) {
+    for (const matchNumber of [...resultMatchNumbers].sort((a, b) => a - b)) {
+      if (matchNumber < 89) {
+        continue;
+      }
+
+      const match = matches.find((candidate) => candidate.matchNumber === matchNumber)!;
+      const resolvedMatch = buildResolvedBracketIndex(matches).get(matchNumber)!;
+      match.result = {
+        homeScore: 1,
+        awayScore: 0,
+        advancesTeamName: resolvedMatch.homeSlot.effectiveName,
+      };
+    }
+  }
+
+  return matches;
 }
 
-describe("bracket propagation", () => {
-  it("resolves match 89 as Canada vs Morocco from results 73 and 76", () => {
-    const resolvedByMatchNumber = buildResolvedBracketIndex(
-      createMatches([
-        {
-          matchNumber: 73,
-          result: {
-            homeScore: 0,
-            awayScore: 1,
-            advancesTeamName: "Canada",
-          },
-        },
-        {
-          matchNumber: 76,
-          result: {
-            homeScore: 1,
-            awayScore: 1,
-            advancesTeamName: "Morocco",
-          },
-        },
-      ]),
-    );
+function expectResolvedSources(
+  resultMatchNumbers: number[],
+  targetMatchNumbers: number[],
+): void {
+  const resolvedIndex = buildResolvedBracketIndex(createBracketMatches(resultMatchNumbers));
 
-    expect(resolvedByMatchNumber.get(89)).toMatchObject({
-      homeSlot: {
-        effectiveName: "Canada",
-        resolvedName: "Canada",
-        sourceMatchNumber: 73,
-        sourceOutcome: "WINNER",
-        isResolvedFromResult: true,
-      },
-      awaySlot: {
-        effectiveName: "Morocco",
-        resolvedName: "Morocco",
-        sourceMatchNumber: 76,
-        sourceOutcome: "WINNER",
-        isResolvedFromResult: true,
-      },
+  for (const targetMatchNumber of targetMatchNumbers) {
+    const topologyMatch = KNOCKOUT_BRACKET_TOPOLOGY.find(
+      (match) => match.matchNumber === targetMatchNumber,
+    )!;
+    const resolvedMatch = resolvedIndex.get(targetMatchNumber)!;
+    const homeSource = resolvedIndex.get(topologyMatch.home.matchNumber)!;
+    const awaySource = resolvedIndex.get(topologyMatch.away.matchNumber)!;
+
+    expect(resolvedMatch.homeSlot).toMatchObject({
+      effectiveName: homeSource.homeSlot.effectiveName,
+      sourceMatchNumber: topologyMatch.home.matchNumber,
+      sourceOutcome: topologyMatch.home.outcome,
+      isResolvedFromResult: true,
     });
+    expect(resolvedMatch.awaySlot).toMatchObject({
+      effectiveName: awaySource.homeSlot.effectiveName,
+      sourceMatchNumber: topologyMatch.away.matchNumber,
+      sourceOutcome: topologyMatch.away.outcome,
+      isResolvedFromResult: true,
+    });
+    expect(areResolvedMatchTeamsDefined(resolvedMatch)).toBe(true);
+  }
+}
+
+describe("official 2026 knockout bracket topology", () => {
+  it("defines every source from the Round of 16 through the final", () => {
+    expect(KNOCKOUT_BRACKET_TOPOLOGY).toEqual([
+      { matchNumber: 89, home: { matchNumber: 74, outcome: "WINNER" }, away: { matchNumber: 77, outcome: "WINNER" } },
+      { matchNumber: 90, home: { matchNumber: 73, outcome: "WINNER" }, away: { matchNumber: 75, outcome: "WINNER" } },
+      { matchNumber: 91, home: { matchNumber: 76, outcome: "WINNER" }, away: { matchNumber: 78, outcome: "WINNER" } },
+      { matchNumber: 92, home: { matchNumber: 79, outcome: "WINNER" }, away: { matchNumber: 80, outcome: "WINNER" } },
+      { matchNumber: 93, home: { matchNumber: 83, outcome: "WINNER" }, away: { matchNumber: 84, outcome: "WINNER" } },
+      { matchNumber: 94, home: { matchNumber: 81, outcome: "WINNER" }, away: { matchNumber: 82, outcome: "WINNER" } },
+      { matchNumber: 95, home: { matchNumber: 86, outcome: "WINNER" }, away: { matchNumber: 88, outcome: "WINNER" } },
+      { matchNumber: 96, home: { matchNumber: 85, outcome: "WINNER" }, away: { matchNumber: 87, outcome: "WINNER" } },
+      { matchNumber: 97, home: { matchNumber: 89, outcome: "WINNER" }, away: { matchNumber: 90, outcome: "WINNER" } },
+      { matchNumber: 98, home: { matchNumber: 93, outcome: "WINNER" }, away: { matchNumber: 94, outcome: "WINNER" } },
+      { matchNumber: 99, home: { matchNumber: 91, outcome: "WINNER" }, away: { matchNumber: 92, outcome: "WINNER" } },
+      { matchNumber: 100, home: { matchNumber: 95, outcome: "WINNER" }, away: { matchNumber: 96, outcome: "WINNER" } },
+      { matchNumber: 101, home: { matchNumber: 97, outcome: "WINNER" }, away: { matchNumber: 98, outcome: "WINNER" } },
+      { matchNumber: 102, home: { matchNumber: 99, outcome: "WINNER" }, away: { matchNumber: 100, outcome: "WINNER" } },
+      { matchNumber: 103, home: { matchNumber: 101, outcome: "LOSER" }, away: { matchNumber: 102, outcome: "LOSER" } },
+      { matchNumber: 104, home: { matchNumber: 101, outcome: "WINNER" }, away: { matchNumber: 102, outcome: "WINNER" } },
+    ]);
   });
 
-  it("keeps the unresolved placeholder when only one origin result exists", () => {
-    const resolvedByMatchNumber = buildResolvedBracketIndex(
-      createMatches([
-        {
-          matchNumber: 75,
-          result: {
-            homeScore: 1,
-            awayScore: 1,
-            advancesTeamName: "Paraguay",
-          },
-        },
-      ]),
+  it("propagates all eight Round of 16 matches", () => {
+    expectResolvedSources(
+      Array.from({ length: 16 }, (_, index) => 73 + index),
+      Array.from({ length: 8 }, (_, index) => 89 + index),
     );
+  });
 
-    expect(resolvedByMatchNumber.get(90)).toMatchObject({
-      homeSlot: {
-        effectiveName: "Paraguay",
-        resolvedName: "Paraguay",
-      },
+  it("propagates all four quarterfinals", () => {
+    expectResolvedSources(
+      Array.from({ length: 24 }, (_, index) => 73 + index),
+      [97, 98, 99, 100],
+    );
+  });
+
+  it("propagates both semifinals", () => {
+    expectResolvedSources(
+      Array.from({ length: 28 }, (_, index) => 73 + index),
+      [101, 102],
+    );
+  });
+
+  it("propagates semifinal losers to third place and winners to the final", () => {
+    const resultMatchNumbers = Array.from({ length: 30 }, (_, index) => 73 + index);
+    const matches = createBracketMatches(resultMatchNumbers);
+    const semifinal101 = matches.find((match) => match.matchNumber === 101)!;
+    const semifinal102 = matches.find((match) => match.matchNumber === 102)!;
+    const beforeSemifinalResults = buildResolvedBracketIndex(
+      matches.map((match) => match.matchNumber >= 101 ? { ...match, result: null } : match),
+    );
+    const resolved101 = beforeSemifinalResults.get(101)!;
+    const resolved102 = beforeSemifinalResults.get(102)!;
+
+    semifinal101.result = {
+      homeScore: 1,
+      awayScore: 0,
+      advancesTeamName: resolved101.homeSlot.effectiveName,
+    };
+    semifinal102.result = {
+      homeScore: 0,
+      awayScore: 1,
+      advancesTeamName: resolved102.awaySlot.effectiveName,
+    };
+
+    const resolvedIndex = buildResolvedBracketIndex(matches);
+    expect(resolvedIndex.get(103)).toMatchObject({
+      homeSlot: { effectiveName: resolved101.awaySlot.effectiveName, sourceOutcome: "LOSER" },
+      awaySlot: { effectiveName: resolved102.homeSlot.effectiveName, sourceOutcome: "LOSER" },
+    });
+    expect(resolvedIndex.get(104)).toMatchObject({
+      homeSlot: { effectiveName: resolved101.homeSlot.effectiveName, sourceOutcome: "WINNER" },
+      awaySlot: { effectiveName: resolved102.awaySlot.effectiveName, sourceOutcome: "WINNER" },
+    });
+  });
+});
+
+describe("bracket propagation safeguards", () => {
+  it("keeps TBD when a source result is still missing", () => {
+    const resolvedIndex = buildResolvedBracketIndex(createBracketMatches([74]));
+
+    expect(resolvedIndex.get(89)).toMatchObject({
+      homeSlot: { effectiveName: "Germany", resolvedName: "Germany" },
       awaySlot: {
-        effectiveName: "W-32-5",
+        effectiveName: "TBD",
         resolvedName: null,
-        sourceMatchNumber: 78,
-        sourceOutcome: "WINNER",
+        sourceMatchNumber: 77,
         isResolvedFromResult: false,
       },
     });
   });
 
-  it("resolves match 91 home as Brazil and keeps away as W-32-6 when 77 is pending", () => {
-    const resolvedByMatchNumber = buildResolvedBracketIndex(
-      createMatches([
-        {
-          matchNumber: 74,
-          result: {
-            homeScore: 2,
-            awayScore: 1,
-            advancesTeamName: "Brazil",
-          },
-        },
-      ]),
-    );
+  it("rejects advancesTeamName when the team did not play the source match", () => {
+    const matches = createBracketMatches();
+    matches.find((match) => match.matchNumber === 74)!.result = {
+      homeScore: 1,
+      awayScore: 0,
+      advancesTeamName: "Egypt",
+    };
 
-    expect(resolvedByMatchNumber.get(91)).toMatchObject({
-      homeSlot: {
-        effectiveName: "Brazil",
-        resolvedName: "Brazil",
-      },
-      awaySlot: {
-        effectiveName: "W-32-6",
-      },
-    });
-  });
-
-  it("ignores invalid advancesTeamName values and does not propagate them", () => {
-    const resolvedByMatchNumber = buildResolvedBracketIndex(
-      createMatches([
-        {
-          matchNumber: 73,
-          result: {
-            homeScore: 0,
-            awayScore: 1,
-            advancesTeamName: "Chile",
-          },
-        },
-      ]),
-    );
-
-    expect(resolvedByMatchNumber.get(89)?.homeSlot).toMatchObject({
-      effectiveName: "Canada",
+    expect(buildResolvedBracketIndex(matches).get(89)?.homeSlot).toMatchObject({
+      effectiveName: "TBD",
       resolvedName: null,
       isResolvedFromResult: false,
     });
   });
 
-  it("does not depend on predictions to resolve slots", () => {
-    const matches = createMatches([
-      {
-        matchNumber: 73,
-        result: null,
-      },
-      {
-        matchNumber: 76,
-        result: {
-          homeScore: 1,
-          awayScore: 1,
-          advancesTeamName: "Morocco",
-        },
-      },
-    ]);
+  it("rejects advancesTeamName when it contradicts a non-draw score", () => {
+    const matches = createBracketMatches();
+    matches.find((match) => match.matchNumber === 74)!.result = {
+      homeScore: 2,
+      awayScore: 0,
+      advancesTeamName: "Paraguay",
+    };
 
-    const resolvedByMatchNumber = buildResolvedBracketIndex(matches);
-
-    expect(resolvedByMatchNumber.get(89)).toMatchObject({
-      homeSlot: {
-        effectiveName: "Canada",
-        resolvedName: null,
-        isResolvedFromResult: false,
-      },
-      awaySlot: {
-        effectiveName: "Morocco",
-        resolvedName: "Morocco",
-        isResolvedFromResult: true,
-      },
-    });
+    expect(buildResolvedBracketIndex(matches).get(89)?.homeSlot.effectiveName).toBe("TBD");
   });
 
-  it("routes semifinal winners and losers to final and third place", () => {
-    const resolvedByMatchNumber = buildResolvedBracketIndex(
-      createMatches([
-        {
-          matchNumber: 97,
-          result: {
-            homeScore: 2,
-            awayScore: 1,
-            advancesTeamName: "Canada",
-          },
-        },
-        {
-          matchNumber: 98,
-          result: {
-            homeScore: 1,
-            awayScore: 1,
-            advancesTeamName: "Brazil",
-          },
-        },
-        {
-          matchNumber: 101,
-          homeTeamName: "Canada",
-          awayTeamName: "Morocco",
-          result: {
-            homeScore: 2,
-            awayScore: 1,
-            advancesTeamName: "Canada",
-          },
-        },
-        {
-          matchNumber: 102,
-          homeTeamName: "Brazil",
-          awayTeamName: "Paraguay",
-          result: {
-            homeScore: 0,
-            awayScore: 1,
-            advancesTeamName: "Paraguay",
-          },
-        },
-      ]),
-    );
+  it("does not read predictions when resolving teams", () => {
+    const matches = createBracketMatches() as Array<BracketPropagationMatch & {
+      predictions?: Array<{ advancesTeamName: string }>;
+    }>;
+    matches.find((match) => match.matchNumber === 74)!.predictions = [
+      { advancesTeamName: "Germany" },
+    ];
 
-    expect(resolvedByMatchNumber.get(104)).toMatchObject({
-      homeSlot: {
-        effectiveName: "Canada",
-        sourceMatchNumber: 101,
-        sourceOutcome: "WINNER",
-      },
-      awaySlot: {
-        effectiveName: "Paraguay",
-        sourceMatchNumber: 102,
-        sourceOutcome: "WINNER",
-      },
-    });
-    expect(resolvedByMatchNumber.get(103)).toMatchObject({
-      homeSlot: {
-        effectiveName: "Morocco",
-        sourceMatchNumber: 101,
-        sourceOutcome: "LOSER",
-      },
-      awaySlot: {
-        effectiveName: "Brazil",
-        sourceMatchNumber: 102,
-        sourceOutcome: "LOSER",
-      },
-    });
-    expect(areResolvedMatchTeamsDefined(resolvedByMatchNumber.get(103)!)).toBe(true);
-    expect(areResolvedMatchTeamsDefined(resolvedByMatchNumber.get(104)!)).toBe(true);
+    expect(buildResolvedBracketIndex(matches).get(89)?.homeSlot.effectiveName).toBe("TBD");
   });
 
-  it("returns the full descendant chain for a source match", () => {
-    expect(getDescendantMatchNumbers(73)).toEqual([89, 97, 101, 104, 103]);
+  it("returns the official descendant chain for a Round of 32 source", () => {
+    expect(getDescendantMatchNumbers(73)).toEqual([90, 97, 101, 103, 104]);
+    expect(getDescendantMatchNumbers(86)).toEqual([95, 100, 102, 103, 104]);
   });
 });
