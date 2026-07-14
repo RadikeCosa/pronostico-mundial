@@ -38,7 +38,12 @@ function createBracketMatches(resultMatchNumbers: number[] = []): BracketPropaga
       homeTeamName,
       awayTeamName,
       result: resultMatchNumberSet.has(matchNumber)
-        ? { homeScore: 1, awayScore: 0, advancesTeamName: homeTeamName }
+        ? {
+          homeScore: 1,
+          awayScore: 0,
+          advancesTeamName: homeTeamName,
+          resolutionMethod: "REGULAR",
+        }
         : null,
     });
   }
@@ -73,6 +78,7 @@ function createBracketMatches(resultMatchNumbers: number[] = []): BracketPropaga
         homeScore: 1,
         awayScore: 0,
         advancesTeamName: resolvedMatch.homeSlot.effectiveName,
+        resolutionMethod: "REGULAR",
       };
     }
   }
@@ -168,11 +174,13 @@ describe("official 2026 knockout bracket topology", () => {
       homeScore: 1,
       awayScore: 0,
       advancesTeamName: resolved101.homeSlot.effectiveName,
+      resolutionMethod: "REGULAR",
     };
     semifinal102.result = {
       homeScore: 0,
       awayScore: 1,
       advancesTeamName: resolved102.awaySlot.effectiveName,
+      resolutionMethod: "REGULAR",
     };
 
     const resolvedIndex = buildResolvedBracketIndex(matches);
@@ -208,6 +216,7 @@ describe("bracket propagation safeguards", () => {
       homeScore: 1,
       awayScore: 0,
       advancesTeamName: "Egypt",
+      resolutionMethod: "REGULAR",
     };
 
     expect(buildResolvedBracketIndex(matches).get(89)?.homeSlot).toMatchObject({
@@ -223,6 +232,7 @@ describe("bracket propagation safeguards", () => {
       homeScore: 2,
       awayScore: 0,
       advancesTeamName: "Paraguay",
+      resolutionMethod: "REGULAR",
     };
 
     expect(buildResolvedBracketIndex(matches).get(89)?.homeSlot.effectiveName).toBe("TBD");

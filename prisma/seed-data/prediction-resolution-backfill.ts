@@ -1,90 +1,43 @@
 import type { PrismaClient } from "@prisma/client";
 
-type BackfillResult = {
-    updatedToRegular: number;
-    ambiguousDrawPredictions: number;
-    inconsistentWinnerPredictions: Array<{
-        predictionId: string;
-        matchNumber: number;
-        predictedAdvancesTeamName: string;
-        expectedWinnerTeamName: string;
-    }>;
+type LegacyResolutionMethodAudit = {
+  unresolvedNonDrawPredictions: number;
+  unresolvedDrawPredictions: number;
 };
 
-function normalizeName(value: string | null | undefined): string | null {
-    const trimmed = value?.trim();
-    return trimmed && trimmed.length > 0 ? trimmed : null;
-}
-
-export async function backfillLegacyKnockoutPredictionResolutionMethods(
-    prismaClient: PrismaClient,
-): Promise<BackfillResult> {
-    const legacyPredictions = await prismaClient.prediction.findMany({
-        where: {
-            resolutionMethod: null,
-            match: {
-                stage: {
-                    not: "GROUP",
-                },
-            },
+export async function auditLegacyKnockoutPredictionResolutionMethods(
+  prismaClient: PrismaClient,
+): Promise<LegacyResolutionMethodAudit> {
+  const legacyPredictions = await prismaClient.prediction.findMany({
+    where: {
+      resolutionMethod: null,
+      match: {
+        stage: {
+          not: "GROUP",
         },
-        select: {
-            id: true,
-            homeScore: true,
-            awayScore: true,
-            advancesTeamName: true,
-            match: {
-                select: {
-                    matchNumber: true,
-                    homeTeamName: true,
-                    awayTeamName: true,
-                },
-            },
-        },
-    });
+      },
+    },
+    select: {
+      homeScore: true,
+      awayScore: true,
+    },
+  });
 
-    let updatedToRegular = 0;
-    let ambiguousDrawPredictions = 0;
-    const inconsistentWinnerPredictions: BackfillResult["inconsistentWinnerPredictions"] = [];
+  return legacyPredictions.reduce<LegacyResolutionMethodAudit>(
+    (audit, prediction) => {
+      if (prediction.homeScore === prediction.awayScore) {
+        audit.unresolvedDrawPredictions += 1;
+      } else {
+        // A non-draw can now represent either REGULAR or EXTRA_TIME, so the
+        // method cannot be inferred without additional historical knowledge.
+        audit.unresolvedNonDrawPredictions += 1;
+      }
 
-    for (const prediction of legacyPredictions) {
-        const normalizedAdvancesTeamName = normalizeName(prediction.advancesTeamName);
-
-        if (prediction.homeScore === prediction.awayScore) {
-            ambiguousDrawPredictions += 1;
-            continue;
-        }
-
-        const winnerTeamName =
-            prediction.homeScore > prediction.awayScore
-                ? prediction.match.homeTeamName
-                : prediction.match.awayTeamName;
-
-        if (
-            normalizedAdvancesTeamName !== null &&
-            normalizedAdvancesTeamName !== winnerTeamName
-        ) {
-            inconsistentWinnerPredictions.push({
-                predictionId: prediction.id,
-                matchNumber: prediction.match.matchNumber,
-                predictedAdvancesTeamName: normalizedAdvancesTeamName,
-                expectedWinnerTeamName: winnerTeamName,
-            });
-            continue;
-        }
-
-        await prismaClient.prediction.update({
-            where: { id: prediction.id },
-            data: {
-                resolutionMethod: "REGULAR",
-            },
-        });
-        updatedToRegular += 1;
-    }
-
-    return {
-        updatedToRegular,
-        ambiguousDrawPredictions,
-        inconsistentWinnerPredictions,
-    };
+      return audit;
+    },
+    {
+      unresolvedNonDrawPredictions: 0,
+      unresolvedDrawPredictions: 0,
+    },
+  );
 }

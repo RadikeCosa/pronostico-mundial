@@ -1,15 +1,20 @@
+import {
+  normalizeResolutionMethod,
+  type ResolutionMethod,
+} from "./knockout-validation";
+
 export type PredictionInput = {
   homeScore: number;
   awayScore: number;
   advancesTeamName?: string | null;
-  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
+  resolutionMethod?: ResolutionMethod | null;
 } | null | undefined;
 
 export type ResultInput = {
   homeScore: number;
   awayScore: number;
   advancesTeamName?: string | null;
-  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
+  resolutionMethod?: ResolutionMethod | null;
 } | null | undefined;
 
 export type MatchInput = {
@@ -53,22 +58,6 @@ function hasExactScore(prediction: NonNullable<PredictionInput>, result: NonNull
 function normalizeAdvancesTeamName(teamName?: string | null): string | null {
   const normalizedTeamName = teamName?.trim();
   return normalizedTeamName ? normalizedTeamName : null;
-}
-
-function normalizeResolutionMethod(
-  resolutionMethod?: string | null,
-): "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null {
-  const normalizedResolutionMethod = resolutionMethod?.trim().toUpperCase();
-
-  if (
-    normalizedResolutionMethod === "REGULAR" ||
-    normalizedResolutionMethod === "EXTRA_TIME" ||
-    normalizedResolutionMethod === "PENALTIES"
-  ) {
-    return normalizedResolutionMethod;
-  }
-
-  return null;
 }
 
 export function calculatePredictionScore(
@@ -154,9 +143,9 @@ export function calculatePredictionScore(
   const reasonParts: string[] = [];
 
   if (exactScore === 3) {
-    reasonParts.push("Marcador exacto a 90 minutos.");
+    reasonParts.push("Marcador exacto.");
   } else if (outcome === 1) {
-    reasonParts.push("Signo acertado a 90 minutos.");
+    reasonParts.push("Signo acertado.");
   }
 
   if (advances === 1) {

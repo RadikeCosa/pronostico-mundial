@@ -128,12 +128,14 @@ describe("read models", () => {
             homeScore: 1,
             awayScore: 1,
             advancesTeamName: "Argentina",
+            resolutionMethod: "PENALTIES",
           },
         ],
         result: {
           homeScore: 1,
           awayScore: 1,
           advancesTeamName: "Argentina",
+          resolutionMethod: "PENALTIES",
         },
       },
       participants: [
@@ -155,16 +157,17 @@ describe("read models", () => {
           homeScore: 1,
           awayScore: 1,
           advancesTeamName: "Argentina",
+          resolutionMethod: "PENALTIES",
         },
         score: {
           exactScore: 3,
           outcome: 0,
           advances: 1,
-          method: 0,
+          method: 1,
           bonus: 1,
-          total: 5,
+          total: 6,
           reason:
-            "Marcador exacto a 90 minutos. Clasificado acertado. Bonus por exacto + clasificado.",
+            "Marcador exacto. Clasificado acertado. Método de resolución acertado. Bonus por exacto + clasificado.",
         },
       },
       {
@@ -772,6 +775,7 @@ describe("read models", () => {
                 homeScore: 0,
                 awayScore: 1,
                 advancesTeamName: "Canada",
+                resolutionMethod: "REGULAR",
               },
             },
             {
@@ -783,6 +787,7 @@ describe("read models", () => {
                 homeScore: 1,
                 awayScore: 1,
                 advancesTeamName: "Morocco",
+                resolutionMethod: "PENALTIES",
               },
             },
             {

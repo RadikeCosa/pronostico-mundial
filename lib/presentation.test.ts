@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatParticipantName, formatResultTrace } from "./presentation";
+import {
+  formatParticipantName,
+  formatPredictionSummary,
+  formatResultSummary,
+  formatResultTrace,
+} from "./presentation";
 
 describe("formatParticipantName", () => {
   it("capitalizes participant names for display", () => {
@@ -35,5 +40,35 @@ describe("formatResultTrace", () => {
         updatedByParticipantName: null,
       }),
     ).toBeNull();
+  });
+});
+
+describe("knockout score summaries", () => {
+  const context = {
+    stage: "ROUND_OF_16",
+    homeTeamName: "Germany",
+    awayTeamName: "Paraguay",
+  };
+
+  it("labels EXTRA_TIME as a final score at 120 minutes", () => {
+    expect(formatPredictionSummary({
+      homeScore: 2,
+      awayScore: 3,
+      advancesTeamName: "Paraguay",
+      resolutionMethod: "EXTRA_TIME",
+    }, context)).toBe(
+      "120': Germany 2 - 3 Paraguay · Clasifica Paraguay · En tiempo suplementario",
+    );
+  });
+
+  it("labels PENALTIES as the tied score before penalties", () => {
+    expect(formatResultSummary({
+      homeScore: 1,
+      awayScore: 1,
+      advancesTeamName: "Germany",
+      resolutionMethod: "PENALTIES",
+    }, context)).toBe(
+      "Antes de penales: Germany 1 - 1 Paraguay · Clasifica Germany · Por penales",
+    );
   });
 });

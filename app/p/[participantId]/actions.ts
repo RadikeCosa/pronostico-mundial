@@ -8,21 +8,9 @@ import {
   buildResolvedBracketIndex,
   type BracketPropagationMatch,
 } from "@/lib/bracket-propagation";
-import { validateKnockoutWriteValues } from "@/lib/knockout-validation";
+import { validateMatchOutcomeValues } from "@/lib/knockout-validation";
 import { isMatchLocked } from "@/lib/read-models";
 import type { PredictionFormState } from "@/components/prediction-form";
-
-function parseScore(rawValue: FormDataEntryValue | null): number | null {
-  if (typeof rawValue !== "string" || rawValue.trim() === "") {
-    return null;
-  }
-
-  if (!/^\d+$/.test(rawValue.trim())) {
-    return null;
-  }
-
-  return Number.parseInt(rawValue, 10);
-}
 
 function toBracketPropagationMatch(match: {
   matchNumber: number;
@@ -33,6 +21,7 @@ function toBracketPropagationMatch(match: {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   } | null;
 }): BracketPropagationMatch {
   return {
@@ -116,6 +105,7 @@ export async function upsertPredictionAction(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
         },
       },
     },
@@ -140,35 +130,29 @@ export async function upsertPredictionAction(
     };
   }
 
-  const homeScore = parseScore(formData.get("homeScore"));
-  const awayScore = parseScore(formData.get("awayScore"));
-
-  if (homeScore === null || awayScore === null || homeScore < 0 || awayScore < 0) {
-    return {
-      status: "error",
-      message: "Los goles deben ser enteros no negativos.",
-    };
-  }
-
-  const advancesTeamNameRaw = formData.get("advancesTeamName");
-  const resolutionMethodRaw = formData.get("resolutionMethod");
-
-  const knockoutValidation = validateKnockoutWriteValues({
+  const outcomeValidation = validateMatchOutcomeValues({
     stage: match.stage,
     homeTeamName: resolvedMatch.homeSlot.effectiveName,
     awayTeamName: resolvedMatch.awaySlot.effectiveName,
-    homeScore,
-    awayScore,
-    advancesTeamNameRaw,
-    resolutionMethodRaw,
+    homeScoreRaw: formData.get("homeScore"),
+    awayScoreRaw: formData.get("awayScore"),
+    advancesTeamNameRaw: formData.get("advancesTeamName"),
+    resolutionMethodRaw: formData.get("resolutionMethod"),
   });
 
-  if (knockoutValidation.status === "error") {
+  if (outcomeValidation.status === "error") {
     return {
       status: "error",
-      message: knockoutValidation.message,
+      message: outcomeValidation.message,
     };
   }
+
+  const {
+    homeScore,
+    awayScore,
+    advancesTeamName,
+    resolutionMethod,
+  } = outcomeValidation.values;
 
   const existingPrediction = await prisma.prediction.findUnique({
     where: {
@@ -186,8 +170,8 @@ export async function upsertPredictionAction(
       data: {
         homeScore,
         awayScore,
-        advancesTeamName: knockoutValidation.values.advancesTeamName,
-        resolutionMethod: knockoutValidation.values.resolutionMethod,
+        advancesTeamName,
+        resolutionMethod,
       },
     });
   } else {
@@ -197,8 +181,8 @@ export async function upsertPredictionAction(
         matchId,
         homeScore,
         awayScore,
-        advancesTeamName: knockoutValidation.values.advancesTeamName,
-        resolutionMethod: knockoutValidation.values.resolutionMethod,
+        advancesTeamName,
+        resolutionMethod,
       },
     });
   }

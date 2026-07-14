@@ -1,3 +1,8 @@
+import {
+  validateMatchOutcomeValues,
+  type ResolutionMethod,
+} from "./knockout-validation";
+
 export type BracketSourceOutcome = "WINNER" | "LOSER";
 export type BracketTargetSlot = "home" | "away";
 
@@ -17,6 +22,7 @@ export type BracketPropagationMatch = {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod: ResolutionMethod | null;
   } | null;
 };
 
@@ -103,15 +109,6 @@ for (const rule of BRACKET_PROPAGATION_RULES) {
   dependentRulesBySource.set(rule.sourceMatchNumber, [rule]);
 }
 
-function normalizeTeamName(name: string | null | undefined): string | null {
-  if (typeof name !== "string") {
-    return null;
-  }
-
-  const normalizedName = name.trim();
-  return normalizedName.length > 0 ? normalizedName : null;
-}
-
 function isPlaceholderName(name: string): boolean {
   return /^(?:W|L)-\d+(?:-\d+)?$/i.test(name.trim()) || /^TBD$/i.test(name.trim());
 }
@@ -171,24 +168,21 @@ export function buildResolvedBracketIndex(
     }
 
     const resolvedSourceMatch = resolveMatch(sourceMatch);
-    const normalizedAdvancesTeamName = normalizeTeamName(
-      sourceMatch.result?.advancesTeamName,
-    );
     const sourceHomeName = resolvedSourceMatch.homeSlot.effectiveName;
     const sourceAwayName = resolvedSourceMatch.awaySlot.effectiveName;
-
-    const scoreWinnerName = sourceMatch.result &&
-      sourceMatch.result.homeScore !== sourceMatch.result.awayScore
-      ? sourceMatch.result.homeScore > sourceMatch.result.awayScore
-        ? sourceHomeName
-        : sourceAwayName
-      : null;
+    const sourceOutcomeValidation = validateMatchOutcomeValues({
+      stage: sourceMatch.stage,
+      homeTeamName: sourceHomeName,
+      awayTeamName: sourceAwayName,
+      homeScoreRaw: sourceMatch.result?.homeScore,
+      awayScoreRaw: sourceMatch.result?.awayScore,
+      advancesTeamNameRaw: sourceMatch.result?.advancesTeamName,
+      resolutionMethodRaw: sourceMatch.result?.resolutionMethod,
+    });
 
     if (
-      normalizedAdvancesTeamName === null ||
-      (normalizedAdvancesTeamName !== sourceHomeName &&
-        normalizedAdvancesTeamName !== sourceAwayName) ||
-      (scoreWinnerName !== null && normalizedAdvancesTeamName !== scoreWinnerName)
+      sourceOutcomeValidation.status === "error" ||
+      sourceOutcomeValidation.values.advancesTeamName === null
     ) {
       return createUnresolvedDerivedSlot({
         originalLabel,
@@ -196,6 +190,8 @@ export function buildResolvedBracketIndex(
         sourceOutcome: propagationRule.sourceOutcome,
       });
     }
+
+    const normalizedAdvancesTeamName = sourceOutcomeValidation.values.advancesTeamName;
 
     if (propagationRule.sourceOutcome === "WINNER") {
       if (!isConcreteTeamName(normalizedAdvancesTeamName)) {

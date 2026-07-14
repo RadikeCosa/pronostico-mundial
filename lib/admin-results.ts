@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { ResultFormState } from "@/components/result-form";
-import { validateKnockoutWriteValues } from "./knockout-validation";
+import { validateMatchOutcomeValues } from "./knockout-validation";
 import { getPrismaClient } from "./prisma";
 import { isMatchLocked } from "./read-models";
 import {
@@ -32,6 +32,7 @@ type AdminBracketMatchRecord = {
     homeScore: number;
     awayScore: number;
     advancesTeamName: string | null;
+    resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
   } | null;
   predictions: Array<{ id: string }>;
 };
@@ -46,18 +47,6 @@ type UpsertAdminMatchResultArgs = {
   now?: Date;
   prismaClient?: AdminResultsPrismaClient;
 };
-
-function parseScore(rawValue: FormDataEntryValue | null): number | null {
-  if (typeof rawValue !== "string" || rawValue.trim() === "") {
-    return null;
-  }
-
-  if (!/^\d+$/.test(rawValue.trim())) {
-    return null;
-  }
-
-  return Number.parseInt(rawValue, 10);
-}
 
 function toBracketPropagationMatch(
   match: Pick<
@@ -84,16 +73,6 @@ export async function upsertAdminMatchResult({
   now = new Date(),
   prismaClient = getPrismaClient(),
 }: UpsertAdminMatchResultArgs): Promise<ResultFormState> {
-  const homeScore = parseScore(homeScoreRaw);
-  const awayScore = parseScore(awayScoreRaw);
-
-  if (homeScore === null || awayScore === null || homeScore < 0 || awayScore < 0) {
-    return {
-      status: "error",
-      message: "Los goles deben ser enteros no negativos.",
-    };
-  }
-
   const match = await prismaClient.match.findUnique({
     where: { id: matchId },
     select: {
@@ -137,6 +116,7 @@ export async function upsertAdminMatchResult({
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
         },
       },
     },
@@ -162,28 +142,36 @@ export async function upsertAdminMatchResult({
     };
   }
 
-  const knockoutValidation = validateKnockoutWriteValues({
+  const outcomeValidation = validateMatchOutcomeValues({
     stage: match.stage,
     homeTeamName: resolvedMatch.homeSlot.effectiveName,
     awayTeamName: resolvedMatch.awaySlot.effectiveName,
-    homeScore,
-    awayScore,
+    homeScoreRaw,
+    awayScoreRaw,
     advancesTeamNameRaw,
     resolutionMethodRaw,
   });
 
-  if (knockoutValidation.status === "error") {
+  if (outcomeValidation.status === "error") {
     return {
       status: "error",
-      message: knockoutValidation.message,
+      message: outcomeValidation.message,
     };
   }
+
+  const {
+    homeScore,
+    awayScore,
+    advancesTeamName,
+    resolutionMethod,
+  } = outcomeValidation.values;
 
   const descendantMatchNumbers = getDescendantMatchNumbers(match.matchNumber);
   const proposedResult = {
     homeScore,
     awayScore,
-    advancesTeamName: knockoutValidation.values.advancesTeamName,
+    advancesTeamName,
+    resolutionMethod,
   };
 
   if (descendantMatchNumbers.length > 0) {
@@ -242,8 +230,8 @@ export async function upsertAdminMatchResult({
       data: {
         homeScore,
         awayScore,
-        advancesTeamName: knockoutValidation.values.advancesTeamName,
-        resolutionMethod: knockoutValidation.values.resolutionMethod,
+        advancesTeamName,
+        resolutionMethod,
         updatedByParticipantId: adminParticipantId,
       },
     });
@@ -253,8 +241,8 @@ export async function upsertAdminMatchResult({
         matchId,
         homeScore,
         awayScore,
-        advancesTeamName: knockoutValidation.values.advancesTeamName,
-        resolutionMethod: knockoutValidation.values.resolutionMethod,
+        advancesTeamName,
+        resolutionMethod,
         createdByParticipantId: adminParticipantId,
         updatedByParticipantId: adminParticipantId,
       },

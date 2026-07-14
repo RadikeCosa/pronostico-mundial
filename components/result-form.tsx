@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import type { ResolutionMethod } from "@/lib/knockout-validation";
 
 export type ResultFormState = {
   status: "idle" | "success" | "error";
@@ -17,7 +18,7 @@ type ResultFormProps = {
     homeScore: number | null;
     awayScore: number | null;
     advancesTeamName: string | null;
-    resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
+    resolutionMethod: ResolutionMethod | null;
   };
   homeTeamName: string;
   awayTeamName: string;
@@ -77,8 +78,8 @@ export function ResultForm({
       {isKnockout ? (
         <>
           <p className="text-xs text-zinc-700">
-            Cargá el marcador a los 90 minutos y luego indicá clasificado y
-            método de resolución.
+            Cargá el marcador final según el método: a los 90 minutos, a los
+            120 minutos o empatado antes de los penales.
           </p>
           <label className="flex flex-col gap-1 text-xs font-medium text-zinc-600">
             Equipo que clasifica
@@ -103,7 +104,7 @@ export function ResultForm({
             >
               <option value="">Seleccionar método</option>
               <option value="REGULAR">En 90 minutos</option>
-              <option value="EXTRA_TIME">En alargue</option>
+              <option value="EXTRA_TIME">En tiempo suplementario (120&apos;)</option>
               <option value="PENALTIES">Por penales</option>
             </select>
           </label>

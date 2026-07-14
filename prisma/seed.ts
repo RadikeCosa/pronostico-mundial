@@ -8,7 +8,7 @@ import {
   HISTORICAL_MATCH_RESULTS,
   upsertHistoricalMatchResults,
 } from "./seed-data/historical-results";
-import { backfillLegacyKnockoutPredictionResolutionMethods } from "./seed-data/prediction-resolution-backfill";
+import { auditLegacyKnockoutPredictionResolutionMethods } from "./seed-data/prediction-resolution-backfill";
 
 const pbkdf2Async = promisify(pbkdf2);
 
@@ -276,18 +276,21 @@ async function main() {
     adminParticipantId: seedAdmin?.id ?? null,
   });
 
-  const predictionResolutionBackfill =
-    await backfillLegacyKnockoutPredictionResolutionMethods(prisma);
+  const predictionResolutionAudit =
+    await auditLegacyKnockoutPredictionResolutionMethods(prisma);
+  const unresolvedLegacyPredictionMethods =
+    predictionResolutionAudit.unresolvedNonDrawPredictions +
+    predictionResolutionAudit.unresolvedDrawPredictions;
 
-  if (predictionResolutionBackfill.inconsistentWinnerPredictions.length > 0) {
+  if (unresolvedLegacyPredictionMethods > 0) {
     console.warn(
-      "Seed warning: knockout predictions with conflicting advancesTeamName were not modified:",
-      predictionResolutionBackfill.inconsistentWinnerPredictions,
+      "Seed warning: legacy knockout predictions without resolutionMethod were not modified because REGULAR and EXTRA_TIME cannot be inferred safely:",
+      predictionResolutionAudit,
     );
   }
 
   console.log(
-    `Seed complete: ${fixture.teams.length} teams, ${fixture.matches.length} matches, ${HISTORICAL_PREDICTIONS.length} predictions, ${HISTORICAL_MATCH_RESULTS.length} results, ${predictionResolutionBackfill.updatedToRegular} legacy prediction methods inferred to REGULAR, ${predictionResolutionBackfill.ambiguousDrawPredictions} ambiguous draw predictions kept with null method.`,
+    `Seed complete: ${fixture.teams.length} teams, ${fixture.matches.length} matches, ${HISTORICAL_PREDICTIONS.length} predictions, ${HISTORICAL_MATCH_RESULTS.length} results, ${unresolvedLegacyPredictionMethods} legacy knockout prediction methods kept unresolved.`,
   );
 }
 

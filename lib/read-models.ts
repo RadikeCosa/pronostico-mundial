@@ -264,6 +264,7 @@ function toBracketPropagationMatch(
         homeScore: match.result.homeScore,
         awayScore: match.result.awayScore,
         advancesTeamName: match.result.advancesTeamName,
+        resolutionMethod: match.result.resolutionMethod ?? null,
       }
       : null,
   };
@@ -737,6 +738,7 @@ export async function getMatchesGroupedByDay(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
         },
       },
     },
@@ -770,6 +772,7 @@ export async function getMatchesByGroup(
           homeScore: true,
           awayScore: true,
           advancesTeamName: true,
+          resolutionMethod: true,
         },
       },
     },
@@ -892,6 +895,7 @@ export async function getMatchReadModelById(
             homeScore: true,
             awayScore: true,
             advancesTeamName: true,
+            resolutionMethod: true,
           },
         },
       },

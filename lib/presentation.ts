@@ -1,4 +1,5 @@
 import type { MatchListItem } from "./read-models";
+import type { ResolutionMethod } from "./knockout-validation";
 
 const stageLabels: Record<string, string> = {
   GROUP: "Fase de grupos",
@@ -11,13 +12,25 @@ const stageLabels: Record<string, string> = {
 };
 
 const resolutionMethodLabels: Record<
-  "REGULAR" | "EXTRA_TIME" | "PENALTIES",
+  ResolutionMethod,
   string
 > = {
   REGULAR: "En 90 minutos",
-  EXTRA_TIME: "En alargue",
+  EXTRA_TIME: "En tiempo suplementario",
   PENALTIES: "Por penales",
 };
+
+function getScoreMomentLabel(resolutionMethod: ResolutionMethod | null | undefined): string {
+  if (resolutionMethod === "EXTRA_TIME") {
+    return "120'";
+  }
+
+  if (resolutionMethod === "PENALTIES") {
+    return "Antes de penales";
+  }
+
+  return "90'";
+}
 
 export function formatStageLabel(stage: string): string {
   return stageLabels[stage] ?? stage.replaceAll("_", " ");
@@ -37,7 +50,7 @@ export function formatPredictionSummary(prediction: {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
-  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
+  resolutionMethod?: ResolutionMethod | null;
 } | null, context?: {
   stage?: string;
   homeTeamName?: string;
@@ -54,7 +67,9 @@ export function formatPredictionSummary(prediction: {
       ? resolutionMethodLabels[prediction.resolutionMethod]
       : "Método sin definir";
 
-    return `90': ${context.homeTeamName} ${prediction.homeScore} - ${prediction.awayScore} ${context.awayTeamName} · Clasifica ${prediction.advancesTeamName ?? "Sin definir"} · ${methodLabel}`;
+    const scoreMoment = getScoreMomentLabel(prediction.resolutionMethod);
+
+    return `${scoreMoment}: ${context.homeTeamName} ${prediction.homeScore} - ${prediction.awayScore} ${context.awayTeamName} · Clasifica ${prediction.advancesTeamName ?? "Sin definir"} · ${methodLabel}`;
   }
 
   const score = `${prediction.homeScore} - ${prediction.awayScore}`;
@@ -69,7 +84,7 @@ export function formatResultSummary(result: {
   homeScore: number;
   awayScore: number;
   advancesTeamName: string | null;
-  resolutionMethod?: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
+  resolutionMethod?: ResolutionMethod | null;
 } | null, context?: {
   stage?: string;
   homeTeamName?: string;
@@ -87,7 +102,9 @@ export function formatResultSummary(result: {
       ? resolutionMethodLabels[result.resolutionMethod]
       : "Método sin definir";
 
-    return `90': ${context.homeTeamName} ${result.homeScore} - ${result.awayScore} ${context.awayTeamName} · Clasifica ${result.advancesTeamName ?? "Sin definir"} · ${methodLabel}`;
+    const scoreMoment = getScoreMomentLabel(result.resolutionMethod);
+
+    return `${scoreMoment}: ${context.homeTeamName} ${result.homeScore} - ${result.awayScore} ${context.awayTeamName} · Clasifica ${result.advancesTeamName ?? "Sin definir"} · ${methodLabel}`;
   }
 
   const score = `${result.homeScore} - ${result.awayScore}`;
@@ -99,7 +116,7 @@ export function formatResultSummary(result: {
 }
 
 export function formatResolutionMethodLabel(
-  resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null | undefined,
+  resolutionMethod: ResolutionMethod | null | undefined,
 ): string | null {
   if (!resolutionMethod) {
     return null;

@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   isMatchLocked: vi.fn(),
   buildResolvedBracketIndex: vi.fn(),
   areResolvedMatchTeamsDefined: vi.fn(),
-  validateKnockoutWriteValues: vi.fn(),
+  validateMatchOutcomeValues: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
@@ -35,7 +35,7 @@ vi.mock("@/lib/read-models", () => ({
 }));
 
 vi.mock("@/lib/knockout-validation", () => ({
-  validateKnockoutWriteValues: mocks.validateKnockoutWriteValues,
+  validateMatchOutcomeValues: mocks.validateMatchOutcomeValues,
 }));
 
 vi.mock("next/cache", () => ({
@@ -68,9 +68,11 @@ describe("upsertPredictionAction auth", () => {
       ]),
     );
     mocks.areResolvedMatchTeamsDefined.mockReturnValue(true);
-    mocks.validateKnockoutWriteValues.mockReturnValue({
+    mocks.validateMatchOutcomeValues.mockReturnValue({
       status: "success",
       values: {
+        homeScore: 1,
+        awayScore: 0,
         advancesTeamName: null,
         resolutionMethod: null,
       },
@@ -145,7 +147,7 @@ describe("upsertPredictionAction auth", () => {
         create: predictionCreate,
       },
     });
-    mocks.validateKnockoutWriteValues.mockReturnValueOnce({
+    mocks.validateMatchOutcomeValues.mockReturnValueOnce({
       status: "error",
       message:
         "El equipo clasificado debe coincidir con uno de los dos equipos del partido.",
@@ -169,7 +171,7 @@ describe("upsertPredictionAction auth", () => {
       message:
         "El equipo clasificado debe coincidir con uno de los dos equipos del partido.",
     });
-    expect(mocks.validateKnockoutWriteValues).toHaveBeenCalledWith(
+    expect(mocks.validateMatchOutcomeValues).toHaveBeenCalledWith(
       expect.objectContaining({
         homeTeamName: "Canada",
         awayTeamName: "Morocco",
@@ -239,6 +241,6 @@ describe("upsertPredictionAction auth", () => {
       message:
         "Este cruce todavía depende de resultados anteriores. El pronóstico se habilitará cuando estén definidos ambos equipos.",
     });
-    expect(mocks.validateKnockoutWriteValues).not.toHaveBeenCalled();
+    expect(mocks.validateMatchOutcomeValues).not.toHaveBeenCalled();
   });
 });

@@ -19,6 +19,7 @@ function createPrismaStub(args: {
       homeScore: number;
       awayScore: number;
       advancesTeamName: string | null;
+      resolutionMethod: "REGULAR" | "EXTRA_TIME" | "PENALTIES" | null;
     } | null;
   }>;
 }) {
@@ -222,12 +223,12 @@ describe("upsertAdminMatchResult", () => {
       }),
     ).resolves.toEqual({
       status: "error",
-      message: "En eliminación directa debés indicar el método de resolución.",
+      message: "En eliminación directa debés indicar un método de resolución válido.",
     });
   });
 
-  it("rejects non-draw knockout with non-REGULAR method", async () => {
-    const { prisma } = createPrismaStub({
+  it("accepts a non-draw 120-minute score with EXTRA_TIME", async () => {
+    const { prisma, calls } = createPrismaStub({
       stage: "ROUND_OF_32",
       homeTeamName: "Brazil",
       awayTeamName: "Japan",
@@ -246,8 +247,14 @@ describe("upsertAdminMatchResult", () => {
         prismaClient: prisma as never,
       }),
     ).resolves.toEqual({
-      status: "error",
-      message: "Con marcador no empatado a 90, el método debe ser REGULAR.",
+      status: "success",
+      message: "Resultado guardado.",
+    });
+    expect(calls.createData).toMatchObject({
+      homeScore: 2,
+      awayScore: 1,
+      advancesTeamName: "Brazil",
+      resolutionMethod: "EXTRA_TIME",
     });
   });
 
@@ -272,13 +279,12 @@ describe("upsertAdminMatchResult", () => {
       }),
     ).resolves.toEqual({
       status: "error",
-      message:
-        "Con marcador empatado a 90, el método debe ser EXTRA_TIME o PENALTIES.",
+      message: "Con REGULAR, el marcador final a los 90 minutos no puede estar empatado.",
     });
   });
 
-  it("accepts draw + EXTRA_TIME + advancing team", async () => {
-    const { prisma, calls } = createPrismaStub({
+  it("rejects a draw as the final EXTRA_TIME score", async () => {
+    const { prisma } = createPrismaStub({
       stage: "ROUND_OF_32",
       homeTeamName: "Germany",
       awayTeamName: "Paraguay",
@@ -297,11 +303,8 @@ describe("upsertAdminMatchResult", () => {
         prismaClient: prisma as never,
       }),
     ).resolves.toEqual({
-      status: "success",
-      message: "Resultado guardado.",
-    });
-    expect(calls.createData).toMatchObject({
-      resolutionMethod: "EXTRA_TIME",
+      status: "error",
+      message: "Con EXTRA_TIME, el marcador final a los 120 minutos no puede estar empatado.",
     });
   });
 
@@ -352,6 +355,7 @@ describe("upsertAdminMatchResult", () => {
             homeScore: 0,
             awayScore: 1,
             advancesTeamName: "Canada",
+            resolutionMethod: "REGULAR",
           },
         },
         {
@@ -414,6 +418,7 @@ describe("upsertAdminMatchResult", () => {
             homeScore: 0,
             awayScore: 1,
             advancesTeamName: "Canada",
+            resolutionMethod: "REGULAR",
           },
         },
         {
@@ -427,6 +432,7 @@ describe("upsertAdminMatchResult", () => {
             homeScore: 1,
             awayScore: 1,
             advancesTeamName: "Morocco",
+            resolutionMethod: "PENALTIES",
           },
         },
         {
@@ -479,6 +485,7 @@ describe("upsertAdminMatchResult", () => {
             homeScore: 0,
             awayScore: 1,
             advancesTeamName: "Canada",
+            resolutionMethod: "REGULAR",
           },
         },
         {
@@ -492,6 +499,7 @@ describe("upsertAdminMatchResult", () => {
             homeScore: 1,
             awayScore: 1,
             advancesTeamName: "Morocco",
+            resolutionMethod: "PENALTIES",
           },
         },
         {

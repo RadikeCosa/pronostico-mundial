@@ -137,7 +137,7 @@ describe("calculatePredictionScore", () => {
       bonus: 1,
       total: 6,
       reason:
-        "Marcador exacto a 90 minutos. Clasificado acertado. Método de resolución acertado. Bonus por exacto + clasificado.",
+        "Marcador exacto. Clasificado acertado. Método de resolución acertado. Bonus por exacto + clasificado.",
     });
   });
 
@@ -155,18 +155,18 @@ describe("calculatePredictionScore", () => {
     expect(score.method).toBe(1);
   });
 
-  it("returns points for draw at 90 resolved in extra time", () => {
+  it("scores the final 120-minute result for EXTRA_TIME", () => {
     const score = calculatePredictionScore(
-      createPrediction(0, 0, "Argentina", "EXTRA_TIME"),
-      createResult(1, 1, "Argentina", "EXTRA_TIME"),
+      createPrediction(2, 3, "Brazil", "EXTRA_TIME"),
+      createResult(2, 3, "Brazil", "EXTRA_TIME"),
       createKnockoutMatch(),
     );
 
-    expect(score.exactScore).toBe(0);
-    expect(score.outcome).toBe(1);
+    expect(score.exactScore).toBe(3);
+    expect(score.outcome).toBe(0);
     expect(score.advances).toBe(1);
     expect(score.method).toBe(1);
-    expect(score.total).toBe(3);
+    expect(score.total).toBe(6);
   });
 
   it("returns points for draw at 90 resolved by penalties", () => {
@@ -185,8 +185,8 @@ describe("calculatePredictionScore", () => {
 
   it("keeps exact + classified bonus even with wrong method", () => {
     const score = calculatePredictionScore(
-      createPrediction(1, 1, "Paraguay", "EXTRA_TIME"),
-      createResult(1, 1, "Paraguay", "PENALTIES"),
+      createPrediction(2, 1, "Paraguay", "EXTRA_TIME"),
+      createResult(2, 1, "Paraguay", "REGULAR"),
       createKnockoutMatch(),
     );
 
